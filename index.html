@@ -297,10 +297,10 @@ const STATN={atk:'โจมตี',def:'ป้องกัน',leth:'สัง�
 /* ===================== UI ===================== */
 let MODE='solo';
 const DEFAULTS={
- A:{troops:{I:[40000,10,5],L:[20000,10,5],M:[40000,10,5]},rep:{I:[300,300,200,200],L:[300,300,200,200],M:[300,300,200,200]},
-    heroes:[['Jeronimo',[5,5,5]],['Molly',[5,5,5]],['Alonso',[5,5,5]]],join:[['Jessie',5],['Jessie',5],['Jeronimo',5],['Jessie',5]]},
- D:{troops:{I:[40000,10,5],L:[20000,10,5],M:[40000,10,5]},rep:{I:[300,300,200,200],L:[300,300,200,200],M:[300,300,200,200]},
-    heroes:[['Natalia',[5,5,5]],['Philly',[5,5,5]],['Zinman',[5,5,5]]],join:[['Sergey',5],['Patrick',5],['Bahiti',5],['Jessie',5]]}
+ A:{troops:{I:[400000,11,10],L:[100000,11,10],M:[500000,11,10]},rep:{I:[300,300,250,250],L:[300,300,250,250],M:[300,300,250,250]},
+    heroes:[['Jordan',[5,5,5],10],['Nikola',[5,5,5],10],['Aisha',[5,5,5],10]],join:[['Jessie',5],['Seo-yoon',5],['Eleanor',5],['Gwen',5]]},
+ D:{troops:{I:[600000,11,10],L:[100000,11,10],M:[300000,11,10]},rep:{I:[300,300,250,250],L:[300,300,250,250],M:[300,300,250,250]},
+    heroes:[['Jordan',[5,5,5],10],['Nikola',[5,5,5],10],['Aisha',[5,5,5],10]],join:[['Sergey',5],['Patrick',5],['Ursar',5],['Aiden',5]]}
 };
 function heroOptions(sel){
   let o='<option value="">— ไม่ใส่ —</option>';
@@ -321,18 +321,24 @@ function fcOpts(v){return [0,1,2,3,4,5,6,7,8,9,10].map(i=>`<option value="${i}" 
 /* ===================== เมต้าสัดส่วนทหาร =====================
  ที่มา: wosformations.com (อัปเดต 17 พ.ย. 2026) · showgamer.com (12 พ.ย. 2026) · topuplive.com (มิ.ย. 2026)
  ผู้ร่วม: wosformations joiners-guide — บัฟชนิดเดียวกันบวกกัน ต่างชนิดคูณกัน จึงเลือกผู้ร่วมคนละชนิด */
-const JOIN_ATK=['Jessie','Seo-yoon','Gwen','Alonso'];   // ดาเมจ + โจมตี + ศัตรูรับดาเมจ + สังหาร
-const JOIN_DEF=['Sergey','Patrick','Logan','Philly'];   // ลดดาเมจที่รับ + เลือด + ศัตรูโจมตีลด + โจมตี/ป้องกัน
+/* เมต้า Gen 18 (พ.ย. 2026): เว็บชุมชนยังไม่มีใครเขียนทีม PvP ของ Gen 16–18 ไว้ (มีแค่ทีม Bear Hunt ของ Gen 17 จาก frostguard)
+   ส่วนที่เป็น Gen 18 จึงมาจากการลองในตัวจำลองนี้ (ติดป้าย "ตัวจำลอง") — ทีม Jordan/Nikola/Aisha T11 FC10 บัฟไอเทม 20% ทั้งสองฝั่ง
+   ผู้ร่วมบุก: ลอง 5 ชุด ชุด Jessie/Seo-yoon/Eleanor/Gwen ทำศัตรูเสียมากสุด (55% เทียบ 40% ของชุดเดิม)
+   ผู้ร่วมรักษาเมือง: ลอง 4 ชุด ชุด Sergey/Patrick/Ursar/Aiden เสียทหารน้อยสุด (32% เทียบ 40%) */
+const G18=['Jordan','Nikola','Aisha'], G17=['Aiden','Bertha','Eleanor'];
+const JOIN_ATK=['Jessie','Seo-yoon','Eleanor','Gwen'];  // ดาเมจ + โจมตี + ศัตรูป้องกันลด + ศัตรูรับดาเมจ (คนละชนิด = คูณกัน)
+const JOIN_DEF=['Sergey','Patrick','Ursar','Aiden'];    // ลดดาเมจที่รับ + เลือด + ศัตรูโจมตีลด + ป้องกัน
 const META=[
- {name:'PvP ทั่วไป',r:[50,20,30],pvp:1,when:'มาร์ชทั่วไป ตีเดี่ยว และระดมพื้นฐาน · สมดุลและนิ่งที่สุด ใช้ได้เกือบทุกสถานการณ์',heroes:'ฮีโร่หลักครบ 3 สาย (ราบ / หอก / ธนู) Gen สูงสุดที่มี',jA:JOIN_ATK,jD:JOIN_DEF,src:'showgamer · topuplive'},
- {name:'ระดมโจมตี',r:[40,10,50],pvp:1,when:'ระดมตีเมืองหรือกองทหารทั่วไป · เพิ่มพลธนูเพื่อดาเมจ ยังมีทหารราบกันหน้า',heroes:'ฮีโร่ธนูตัวแรงสุดช่อง 3 · ผู้ร่วมบัฟคนละชนิด',jA:JOIN_ATK,src:'topuplive'},
- {name:'ระดมดาเมจสูง',r:[30,10,60],pvp:1,when:'ศัตรูตั้งกำแพงทหารราบ · พลธนูได้ +10% ใส่ทหารราบ และยิงจากหลังแนวราบของเรา',heroes:'ฮีโร่ธนูกับฮีโร่บัฟดาเมจ',jA:JOIN_ATK,src:'topuplive · wosformations'},
- {name:'ราบ+หอก',r:[60,40,0],pvp:1,when:'ระดมแบบคลาสสิก · ชนะกำแพงพลธนู (หอก +10% ใส่ธนู) แต่แพ้กำแพงทหารราบ',heroes:'ทีม Greg (Land of Heroes ทีม 1) · อย่าเพิ่งใช้ถ้ายังไม่มี Greg',jA:JOIN_ATK,src:'wosformations · showgamer'},
- {name:'สมดุลเน้นธนู',r:[45,10,45],pvp:1,when:'ค่าเริ่มต้นสากล · Labyrinth และ Alliance Championship',heroes:'ฮีโร่ครบ 3 สาย',jA:JOIN_ATK,jD:JOIN_DEF,src:'showgamer'},
- {name:'ทีม Mia',r:[54,3,43],pvp:1,when:'ทีมเฉพาะทางที่ใช้สกิลสุ่มของ Mia (Land of Heroes ทีม 2) · แบบใกล้กัน 48/4/48',heroes:'Mia ช่องหอก · ไม่มี Mia ใช้ Molly แบบ 50/0/50',jA:JOIN_ATK,src:'showgamer'},
- {name:'รักษาเมือง',r:[60,20,20],pvp:1,when:'ฝั่งป้องกัน / garrison · ทหารราบหนาไว้รับดาเมจแถวหน้า',heroes:'ฮีโร่ราบสายทน (ลดดาเมจ / เลือด / ป้องกัน) · ตั้งฮีโร่ป้องกันแยกจากทีมบุก',jD:JOIN_DEF,src:'topuplive · wosformations'},
- {name:'ป้องกันหนัก',r:[70,30,0],pvp:1,when:'ตั้งรับอย่างเดียว เน้นทนให้นานที่สุด · ศัตรูเป็นพลธนูเยอะจะเจ็บ',heroes:'ฮีโร่ราบสายทน',jD:JOIN_DEF,src:'topuplive'},
- {name:'Bear Hunt',r:[10,10,80],pvp:0,when:'อีเวนต์ล่าหมี (ผู้นำระดม) · หมีไม่ตีกลับ นับแค่ดาเมจ · Gen ต้นใช้ 20/30/50 · ไม่ใช่ PvP',heroes:'ฮีโร่ 3 สาย ใช้ครบ 9 สกิล · Renee ต้องมีหอก ~20% · Reina/Sonya ~30%',jA:['Jessie','Seo-yoon','Gwen','Jasser'],src:'wosformations bear-trap'},
+ {name:'PvP ทั่วไป',r:[50,20,30],pvp:1,when:'มาร์ชทั่วไป ตีเดี่ยว และระดมพื้นฐาน · สมดุลและนิ่งที่สุด ใช้ได้เกือบทุกสถานการณ์',heroes:'Gen 18: Jordan · Nikola · Aisha (ยังไม่มีใช้ Gen 17: Aiden · Bertha · Eleanor)',hs:G18,jA:JOIN_ATK,jD:JOIN_DEF,src:'showgamer · topuplive · heaven-guardian (พ.ย. 2026)'},
+ {name:'ระดมโจมตี',r:[40,10,50],pvp:1,when:'ระดมตีเมืองหรือกองทหารทั่วไป · ตัวจำลอง Gen 18: ดีที่สุดเมื่อศัตรูรักษาเมืองแบบ 60/20/20 หรือ 50/20/30',heroes:'Gen 18: Jordan · Nikola · Aisha · อุปกรณ์ Nikola ให้ป้องกัน +15% ตอนนำระดม',hs:G18,jA:JOIN_ATK,src:'topuplive · heaven-guardian · ตัวจำลอง'},
+ {name:'ระดมดาเมจสูง',r:[30,10,60],pvp:1,when:'ศัตรูตั้งกำแพงทหารราบ · พลธนูได้ +10% ใส่ทหารราบ · เปราะ ทหารหายเร็ว',heroes:'Gen 18: Aisha ช่องธนูสำคัญสุด (Scorching Tides ลดป้องกันราบ/หอกศัตรู + เพิ่มโจมตีธนู)',hs:G18,jA:JOIN_ATK,src:'topuplive · whiteoutsurvival-community'},
+ {name:'แก้ราบ+หอก',r:[20,20,60],pvp:1,when:'ตัวจำลอง Gen 18: ดีที่สุดเมื่อศัตรูไม่มีพลธนู (70/30/0 หรือ 60/40/0) ทั้งตอนบุกและตอนรับ · พลธนูได้ +10% ใส่ทหารราบ',heroes:'Gen 18: Jordan · Nikola · Aisha',hs:G18,jA:JOIN_ATK,jD:JOIN_DEF,src:'ตัวจำลอง'},
+ {name:'ราบ+หอก',r:[60,40,0],pvp:1,when:'ระดมแบบคลาสสิก · ชนะกำแพงพลธนู (หอก +10% ใส่ธนู) แต่แพ้กำแพงทหารราบ',heroes:'ทีม Greg (Land of Heroes ทีม 1) · ราบ Jordan หอก Nikola',hs:G18,jA:JOIN_ATK,src:'wosformations (17 พ.ย. 2026) · showgamer'},
+ {name:'สมดุลเน้นธนู',r:[45,10,45],pvp:1,when:'ค่าเริ่มต้นสากล · Labyrinth และ Alliance Championship',heroes:'Gen 18: Jordan · Nikola · Aisha',hs:G18,jA:JOIN_ATK,jD:JOIN_DEF,src:'showgamer'},
+ {name:'รักษาเมือง Gen 18',r:[60,10,30],pvp:1,when:'ตัวจำลอง Gen 18: เสียทหารน้อยสุดเมื่อโดนระดมแบบ 50/20/30 หรือ 40/10/50 · ทหารราบ 60–70% ไว้รับ',heroes:'Jordan · Nikola · Aisha เหมาะรักษาเมืองมาก: อุปกรณ์ Jordan ป้องกัน +15% และ Aisha สังหาร +15% ตอนป้องกัน',hs:G18,jD:JOIN_DEF,src:'heaven-guardian (เกิน 50% ราบ) · ตัวจำลอง'},
+ {name:'รักษาเมือง',r:[60,20,20],pvp:1,when:'ฝั่งป้องกัน / garrison · ทหารราบหนาไว้รับดาเมจแถวหน้า',heroes:'ฮีโร่ราบสายทน · ตั้งทีมป้องกันแยกจากทีมบุก',hs:G18,jD:JOIN_DEF,src:'topuplive · wosformations'},
+ {name:'ป้องกันหนัก',r:[70,30,0],pvp:1,when:'ตั้งรับอย่างเดียว เน้นทนให้นานที่สุด · ตัวจำลอง: แพ้ทาง 20/20/60',heroes:'ฮีโร่ราบสายทน',hs:G18,jD:JOIN_DEF,src:'topuplive · buffget'},
+ {name:'Bear Hunt',r:[10,10,80],pvp:0,when:'อีเวนต์ล่าหมี (ผู้นำระดม) · หมีไม่ตีกลับ นับแค่ดาเมจ · ลองเพิ่ม 10/20/70 หรือ 5/5/90 · ไม่ใช่ PvP',heroes:'Gen 17 สายเติม: Jeronimo · Dominic · Eleanor · สายฟรี: Hector · Mia · Aisling',hs:['Jeronimo','Dominic','Eleanor'],jA:['Jessie','Jasser','Jeronimo','Seo-yoon'],src:'frostguard (12 ก.ย. 2026) · wosformations bear-trap'},
  {name:'Crazy Joe',r:[90,10,0],pvp:0,when:'อีเวนต์ Crazy Joe ป้องกันเมือง (คลื่นปกติ) · ไม่ใช่ PvP',heroes:'ส่งเสริมกำลังด้วย Jessie / Jasser / Jeronimo ช่องแรก · เก็บฮีโร่แรงไว้ป้องกันบ้าน',jD:['Jessie','Jasser','Jeronimo','Jessie'],src:'wosformations crazy-joe'},
 ];
 function metaBox(id,cfg,rr){
@@ -350,10 +356,10 @@ function metaBox(id,cfg,rr){
   return `<div class="meta">
     <div><b>📌 ${match?'ตรงกับเมต้า':'ใกล้สุดคือเมต้า'}: ${m.name} ${m.r.join('/')}</b> ${match?'':`<span class="note">(ต่างจากของคุณ ${near.d}%)</span>`} ${m.pvp?'':'<span class="tag">อีเวนต์ ไม่ใช่ PvP</span>'}</div>
     <div>${m.when}</div>
-    <div><b>ฮีโร่:</b> ${m.heroes}</div>
+    <div><b>ฮีโร่:</b> ${m.heroes} ${m.hs?`<button class="btn ghost" data-mh="${m.hs.join(',')}" style="padding:1px 8px;font-size:12px">ใช้ ${m.hs.join(' · ')}</button>`:''}</div>
     ${MODE==='rally'?`<div><b>ผู้ร่วม${id==='A'?'ระดม':'รักษาเมือง'}แนะนำ:</b> ${join.join(' · ')} (สกิลแรก Lv5) <button class="btn ghost" data-mj="${join.join(',')}" style="padding:1px 8px;font-size:12px">ใช้ผู้ร่วมชุดนี้</button></div>`:''}
     <div><b>แก้ทางศัตรู:</b> ${ctr}</div>
-    <div class="note">ที่มา: ${m.src} · เมต้าเป็นแนวทางจากชุมชนผู้เล่น ไม่ใช่สูตรตายตัว</div>
+    <div class="note">ที่มา: ${m.src} · เมต้าเป็นแนวทาง ไม่ใช่สูตรตายตัว${m.src.includes('ตัวจำลอง')?' · ข้อที่บอกว่า “ตัวจำลอง” มาจากการลองทีม Gen 18 ในหน้านี้ เพราะยังไม่มีเว็บไหนเขียนเมต้า PvP ของ Gen 18':''}</div>
   </div>`;
 }
 function renderSide(id,cfg){
@@ -437,7 +443,8 @@ function bindSide(id){
   el.onclick=e=>{const d=e.target.dataset;
     if(d.preset){const p=d.preset.split(','); TY.forEach((t,i)=>el.querySelector(`[data-q="${t}"]`).value=p[i]); quickApply();}
     if(d.q==='ok') quickApply();
-    if(d.mj){CFG[id].join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();} };
+    if(d.mj){CFG[id].join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();}
+    if(d.mh){const c=CFG[id]; d.mh.split(',').forEach((n,i)=>c.heroes[i]=[n,[5,5,5],c.heroes[i]?.[2]??10]); saveCfg(); rerender();} };
   el.onkeydown=e=>{ if(e.key==='Enter'&&e.target.dataset.q){ e.preventDefault(); quickApply(); } };
   el.onchange=e=>{const c=CFG[id], d=e.target.dataset, v=e.target.value;
     if(d.k==='cnt'){c.troops[d.t][0]=parseNum(v); rerender();}
