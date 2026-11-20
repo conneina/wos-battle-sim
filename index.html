@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WOS Battle Sim</title>
+<style>
+:root{
+  --bg:#0f1419; --panel:#182029; --panel2:#1f2a35; --line:#2c3a48; --text:#e6edf3; --mute:#8b9bab;
+  --atk:#ff6b5b; --atkbg:rgba(255,107,91,.10); --def:#4da3ff; --defbg:rgba(77,163,255,.10);
+  --ok:#3fb950; --warn:#d29922; --accent:#7ee0ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f6f8; --panel:#ffffff; --panel2:#eef2f6; --line:#d5dde5; --text:#1b2530; --mute:#5c6b7a;
+    --atk:#d6402f; --atkbg:rgba(214,64,47,.07); --def:#1f6fd1; --defbg:rgba(31,111,209,.07);
+    --ok:#1a7f37; --warn:#9a6700; --accent:#0a6c8a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Sarabun","Noto Sans Thai","Segoe UI",system-ui,sans-serif}
+header{padding:16px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{margin:0;font-size:20px} h1 small{font-weight:400;color:var(--mute);font-size:13px}
+.wrap{max-width:1280px;margin:0 auto;padding:16px}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.bar label{display:flex;gap:6px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--text);padding:6px 14px;cursor:pointer;font:inherit}
+.seg button.on{background:var(--accent);color:#04202a;font-weight:600}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.sides{grid-template-columns:1fr}}
+.side{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel)}
+.side.atk{border-top:4px solid var(--atk);background:linear-gradient(var(--atkbg),transparent 140px),var(--panel)}
+.side.def{border-top:4px solid var(--def);background:linear-gradient(var(--defbg),transparent 140px),var(--panel)}
+.side h2{margin:0 0 8px;font-size:17px}
+.side.atk h2{color:var(--atk)} .side.def h2{color:var(--def)}
+h3{font-size:13px;margin:12px 0 6px;color:var(--mute);font-weight:600;text-transform:none}
+table{border-collapse:collapse;width:100%}
+th,td{padding:4px 4px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--mute);font-size:12px}
+.scroll{overflow-x:auto}
+input,select,button{font:inherit;color:var(--text)}
+input[type=number],input[type=text],select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.quick{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+.quick input{background:var(--panel)!important}
+.quick label{display:flex;gap:4px;align-items:center}
+.quick .presets{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--mute)}
+.quick .presets .btn{padding:2px 8px;font-size:12px}
+.quick .note{flex-basis:100%}
+input[type=number]{width:84px}
+input.pct{width:70px}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.hero .lv{display:flex;gap:6px;flex-wrap:wrap;grid-column:1/-1;font-size:12px;color:var(--mute)}
+.hero .lv label{display:flex;gap:4px;align-items:center}
+.hero select.h{width:100%}
+.tag{font-size:11px;padding:1px 6px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);color:var(--mute)}
+.btn{background:var(--accent);color:#04202a;border:0;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+.res{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--panel2);border-radius:8px;padding:10px}
+.kpi b{display:block;font-size:22px} .kpi span{color:var(--mute);font-size:12px}
+.win{color:var(--ok)} .lose{color:var(--atk)}
+canvas{width:100%;height:240px;background:var(--panel2);border-radius:8px}
+.note{color:var(--mute);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--panel2)}
+.chip.off{opacity:.45;text-decoration:line-through}
+details{margin-top:10px} summary{cursor:pointer;color:var(--accent)}
+.joiners .hero{grid-template-columns:auto 1fr auto}
+.hide{display:none!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding:0">
+  <h1>WOS Battle Sim <small>ตัวจำลองการรบ Whiteout Survival · โจมตีเดี่ยว / ระดม · ฝั่งโจมตี vs ป้องกัน</small></h1>
+</div></header>
+
+<div class="wrap">
+  <div class="bar">
+    <span>โหมด</span>
+    <div class="seg" id="modeSeg"><button data-m="solo" class="on">โจมตีเดี่ยว (Solo)</button><button data-m="rally">ระดม (Rally) vs รักษาเมือง (Garrison)</button></div>
+    <label><input type="checkbox" id="city" checked> เป้าหมายเป็นเมืองผู้เล่น (ฝั่งบุกตายจริง 35%)</label>
+    <label>รอบจำลอง <input type="number" id="runs" value="300" min="1" max="5000" style="width:70px"></label>
+    <label>เทิร์นสูงสุด <input type="number" id="maxT" value="300" min="10" max="5000" style="width:70px"></label>
+    <label title="ค่าคงที่สูตร: ทหารที่ฆ่าได้ = K × √จำนวน × (โจมตี×สังหาร)/(ป้องกัน×พลังชีวิต)">ค่า K <input type="number" id="K" value="1" step="0.05" min="0.01" style="width:70px"></label>
+    <span style="flex:1"></span>
+    <button class="btn ghost" id="swap">สลับฝั่ง</button>
+    <button class="btn" id="go">▶ จำลองการรบ</button>
+  </div>
+
+  <div class="sides">
+    <section class="side atk" id="sideA"></section>
+    <section class="side def" id="sideD"></section>
+  </div>
+
+  <div class="res" id="res"><span class="note">กรอกข้อมูลทั้งสองฝั่งแล้วกด “จำลองการรบ”</span></div>
+
+  <div class="res">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <b style="font-size:16px">🧭 แนะนำการแก้ทาง</b>
+      <label>หาวิธีให้ <select id="advSide"><option value="A">ฝั่งโจมตี</option><option value="D">ฝั่งป้องกัน</option></select></label>
+      <label><input type="checkbox" id="advHero" checked> ลองเปลี่ยนฮีโร่ด้วย</label>
+      <span style="flex:1"></span>
+      <button class="btn" id="advGo">หาวิธีแก้ทาง</button>
+    </div>
+    <div id="adv" class="note" style="margin-top:8px">ลองสัดส่วนทหาร บัฟไอเทม ฮีโร่ และผู้ร่วมระดม แล้วบอกว่าแบบไหนชนะง่ายขึ้น · ใช้เวลาราว 5–20 วินาที</div>
+  </div>
+
+  <details>
+    <summary>วิธีคำนวณ / ข้อจำกัด</summary>
+    <div class="note" style="margin-top:8px;line-height:1.7">
+      <b>สูตรหลัก</b> (ผู้เล่นแกะเอง ยังไม่ใช่สูตรทางการ): ทหารที่ฆ่าได้ต่อเทิร์น = K × √(จำนวนทหารสายที่ตี) × (โจมตี × สังหาร) ÷ (ป้องกัน × พลังชีวิต ของเป้า) × ตัวคูณดาเมจ<br>
+      • ค่าแต่ละตัว = ค่าพื้นฐานเทียร์ × (1 + % จากรายงานการรบ) × (1 + บัฟสกิล − ดีบัฟจากศัตรู)<br>
+      • บัฟหมวดเดียวกันบวกกัน คนละหมวดคูณกัน (โจมตี% / ดาเมจ% / ลดดาเมจที่รับ% แยกหมวด)<br>
+      • ทุกสายตีแถวหน้าก่อน: ทหารราบ → ทหารหอก → พลธนู · ทหารหอก T7+ ตีข้ามไปพลธนู 20% (Ambusher)<br>
+      • สายที่ชนะทาง +10% (ราบ→หอก, หอก→ธนู, ธนู→ราบ) · ทหารราบ T7+ ป้องกัน +10% เมื่อโดนหอก · พลธนู T7+ ยิงสองครั้ง 10% · สกิล FC ของทหารคิดเป็นค่าเฉลี่ย<br>
+      • สกิลฮีโร่ใช้เฉพาะสกิลออกรบ (Expedition) · สกิลที่เป็นโอกาส (%) สุ่มทุกเทิร์น จึงได้ผลแพ้ชนะเป็นเปอร์เซ็นต์ · สกิล “ทุก N เทิร์น” ทำงานตามเทิร์น<br>
+      • ระดม: ผู้นำใช้ 9 สกิล (3 ฮีโร่ × 3) + สกิลแรกของฮีโร่ช่องแรกผู้ร่วม 4 คน · ใช้ค่าสถานะของผู้นำทั้งกองทัพ · รักษาเมือง: ใช้ค่าสถานะของคนที่บัฟสูงสุด + สกิลแรกของผู้ร่วม 4 คน<br>
+      • ค่าสถานะ % = โบนัสอื่น + ค่าออกรบของฮีโร่ (โจมตี/ป้องกัน ใส่สายเดียวกับฮีโร่ · ค่าที่ระดับสูงสุด) + อุปกรณ์เสริม (สังหาร/พลังชีวิต ตามสัดส่วนเลเวล 1–10)<br>
+      • โบนัสพิเศษของอุปกรณ์เสริม: Lv1–2 5% · Lv3–4 7.5% · Lv5–6 10% · Lv7–8 12.5% · Lv9–10 15% ใช้ได้เฉพาะตอนนำระดม / ตอนป้องกัน ตามชนิด · ใช้สูตร wiki: รวม × (1 + พิเศษ) + พิเศษ<br>
+      • บัฟไอเทม (+10% / +20%) บวกเข้าค่าสถานะ % ของทหารทุกสาย ก่อนคูณโบนัสพิเศษ<br>
+      • ถ้าติ๊ก “ยอดรวมจากรายงาน” จะไม่บวกค่าฮีโร่/อุปกรณ์ซ้ำ เพราะในรายงานรวมไว้แล้ว (สกิลฮีโร่ยังนับเหมือนเดิม เพราะรายงานไม่รวมสกิล)<br>
+      • ถ้าครบเทิร์นสูงสุดแล้วยังไม่จบ ถือว่าฝั่งป้องกันรับได้<br>
+      • <b>ค่า K</b> ใช้ปรับให้ตรงเกมจริง: เทียบกับรายงานการรบของตัวเองแล้วขยับ K จนจำนวนทหารที่เสียใกล้เคียง<br>
+      ที่มา: ค่าพื้นฐานทหาร/สกิลทหาร wostools.net · สกิลฮีโร่ whiteoutsurvival.wiki · กติการะดม/รักษาเมือง FAQ Century Games · สูตรดาเมจ note.com/wosjapan + kingshotguides
+    </div>
+  </details>
+</div>
+
+<script>
+/* ===================== ข้อมูลทหาร ===================== */
+const TY=['I','L','M'], TYN={I:'ทหารราบ',L:'ทหารหอก',M:'พลธนู'};
+// [atk, def, leth, hp]
+function baseTier(t,tier){
+  if(tier===11) return {I:[12,15,12,17],L:[15,13,16,13],M:[16,12,17,12]}[t];
+  if(t==='I') return [tier,tier+3,tier,tier+5];
+  if(t==='L') return [tier+3,tier+1,tier+4,tier+1];
+  return [tier+4,tier,tier===1?5:tier+5,tier];
+}
+const FC={
+ I:{10:[[10,13,10,15],[11,14,10,16],[12,16,11,17],[13,17,12,18],[13,18,13,19],[14,20,13,20],[14,21,13,21],[15,22,14,22],[15,23,15,23],[16,25,15,24],[18,26,16,25]],
+    11:[[12,15,12,17],[13,16,12,18],[14,17,13,19],[15,18,14,20],[15,19,15,21],[16,22,15,22],[17,23,16,23],[17,24,16,24],[18,25,17,25],[18,27,17,26],[19,28,18,27]]},
+ L:{10:[[13,11,14,11],[14,12,15,11],[16,13,16,12],[17,14,17,13],[18,14,18,13],[20,15,19,14],[21,15,20,14],[22,16,21,15],[23,17,22,15],[25,17,23,16],[26,19,24,17]],
+    11:[[15,13,16,13],[16,14,17,13],[18,15,18,14],[19,16,19,15],[20,16,20,15],[22,17,21,16],[23,17,22,16],[24,18,23,17],[25,19,24,17],[27,19,25,18],[28,21,26,20]]},
+ M:{10:[[14,10,15,10],[15,11,16,11],[17,12,17,12],[18,13,18,13],[19,14,19,13],[21,14,20,14],[22,15,21,14],[23,15,22,15],[24,16,23,15],[26,17,24,16],[27,19,25,17]],
+    11:[[16,12,17,12],[17,13,18,13],[19,14,19,14],[20,15,20,15],[21,16,21,15],[23,16,22,16],[24,17,23,16],[25,18,24,17],[26,19,25,18],[28,19,26,18],[30,21,27,20]]}
+};
+const T12={I:[22,31,21,30],L:[31,24,29,23],M:[33,24,30,23]};
+function troopBase(t,tier,fc){
+  if(tier===12) return T12[t];
+  if(tier>=10) return FC[t][tier][fc];
+  return baseTier(t,tier);
+}
+// สกิลทหาร → ตัวคูณค่าเฉลี่ย
+function troopSkill(t,tier,fc){
+  const f = tier===12?10:(tier>=10?fc:0), r={atk:1,def:1,dmg:1,taken:1,t7:tier>=7};
+  if(t==='I'){
+    const sh = f>=5?.375:f>=3?.25:0;
+    if(f>=10){r.def*=1.06; r.taken*=1-sh*.15;} else if(f>=8){r.def*=1.04; r.taken*=1-sh*.10;}
+  }
+  if(t==='L'){
+    r.dmg*=1+(f>=5?.15:f>=3?.10:0);
+    r.taken*=1-(f>=10?.15:f>=8?.10:0)*.5;
+  }
+  if(t==='M'){
+    if(tier>=7) r.dmg*=1.10;
+    const gp = f>=5?.3:f>=3?.2:0; r.dmg*=1+gp*.5;
+    if(f>=10){r.atk*=1.06; r.dmg*=1+gp*.375;} else if(f>=8){r.atk*=1.04; r.dmg*=1+gp*.25;}
+  }
+  return r;
+}
+const COUNTER={I:'L',L:'M',M:'I'};
+
+/* ===================== สกิลออกรบของฮีโร่ =====================
+ effect = [stat, ใคร, ค่า Lv1-5 (%), opts]
+ stat ฝั่งตัวเอง: atk def leth hp dmg(ดาเมจที่ทำ) taken(ลดดาเมจที่รับ)
+ stat ใส่ศัตรู: eatk edef eleth edmg(ศัตรูทำดาเมจลด) vuln(ศัตรูรับดาเมจเพิ่ม)
+ ใคร: A=ทุกสาย / I L M (ฝั่งตัวเอง=สายที่ได้บัฟ, ใส่ศัตรู=สายศัตรูที่โดน)
+ opts: p=โอกาส, ev=ทุก N เทิร์น, du=นาน (เทิร์น), vs=เฉพาะตีสายนี้, st=สะสมทุก N เทิร์น, dc=ลดลงทีละ 15% จนหมดใน N เทิร์น */
+const R=a=>[a,2*a,3*a,4*a,5*a], P=[.05,.1,.15,.2,.25];
+const S=(k,f)=>({k,f:f||[]});
+const HEROES=[
+ // Rare (สกิลออกรบเป็นบัฟเมือง ไม่มีผลในการรบ)
+ {n:'Smith',g:0,r:'R',t:'I',x:[S('Burnished Iron'),S('Craftsmanship')]},
+ {n:'Eugene',g:0,r:'R',t:'I',x:[S('Woodland Inheritor'),S('Master Woodcutter')]},
+ {n:'Charlie',g:0,r:'R',t:'L',x:[S('Demolitions Expert'),S('Coal Extraction')]},
+ {n:'Cloris',g:0,r:'R',t:'M',x:[S('Top Hunter'),S('Predator')]},
+ // Epic
+ {n:'Sergey',g:0,r:'E',t:'I',x:[S("Defenders' Edge",[['taken','A',R(4)]]),S('Weaken',[['eatk','A',R(4)]])]},
+ {n:'Jessie',g:0,r:'E',t:'L',x:[S('Stand of Arms',[['dmg','A',R(5)]]),S('Bulwarks',[['taken','A',R(4)]])]},
+ {n:'Patrick',g:0,r:'E',t:'L',x:[S('Super Nutrients',[['hp','A',R(5)]]),S('Caloric Booster',[['atk','A',R(5)]])]},
+ {n:'Lumak Bokan',g:0,r:'E',t:'L',x:[S('Tactical Deception',[['edmg','A',R(4)]]),S('Emerald Warrior')]},
+ {n:'Ling Xue',g:0,r:'E',t:'L',x:[S('Fearsome Aura',[['eatk','A',R(4)]]),S('Total Control')]},
+ {n:'Gina',g:0,r:'E',t:'M',x:[S('Endurance Training'),S('Quick Paced')]},
+ {n:'Bahiti',g:0,r:'E',t:'M',x:[S('Sixth Sense',[['taken','A',R(4)]]),S('Fluorescence',[['dmg','A',R(10),{p:.5}]])]},
+ {n:'Jasser',g:0,r:'E',t:'M',x:[S('Tactical Genius',[['dmg','A',R(5)]]),S('Enlightened Warfare')]},
+ {n:'Seo-yoon',g:0,r:'E',t:'M',x:[S('Rallying Beat',[['atk','A',R(5)]]),S('Soothing Dance')]},
+ // Legendary
+ {n:'Jeronimo',g:1,t:'I',x:[S('Battle Manifesto',[['dmg','A',R(5)]]),S('Swordmentor',[['atk','A',R(5)]]),S('Expert Swordsmanship',[['dmg','A',R(6),{ev:4,du:2}]])]},
+ {n:'Natalia',g:1,t:'I',x:[S('Feral Protection',[['taken','A',R(10),{p:.4}]]),S('Queen of the Wild',[['atk','A',R(5)]]),S('Call of the Wild',[['dmg','A',R(5)]])]},
+ {n:'Molly',g:1,t:'L',x:[S("Snow's Grace",[['taken','A',R(10),{p:.4}]]),S('Ice Dominion',[['dmg','A',R(10),{p:.5}]]),S('Youthful Rage',[['dmg','A',R(5)]])]},
+ {n:'Zinman',g:1,t:'M',x:[S('Implacable',[['def','A',R(2)],['hp','A',R(2)]]),S('Bastionist'),S('Positional Battler',[['leth','A',R(5)]])]},
+ {n:'Flint',g:2,t:'I',x:[S('Pyromaniac',[['dmg','I',R(20)]]),S('Burning Resolve',[['atk','A',R(5)]]),S('Immolation',[['leth','A',R(5)]])]},
+ {n:'Philly',g:2,t:'L',x:[S('Vigor Tactics',[['atk','A',R(3)],['def','A',R(2)]]),S('Dosage Boost',[['dmg','A',[120,140,160,180,200],{p:.25}]]),S('Energizing Shot',[['taken','A',R(10),{p:.4}]])]},
+ {n:'Alonso',g:2,t:'M',x:[S('Onslaught',[['leth','A',R(10),{p:.4}]]),S('Iron Strength',[['edmg','A',R(10),{p:.2,du:2}]]),S('Poison Harpoon',[['dmg','A',R(10),{p:.5}]])]},
+ {n:'Logan',g:3,t:'I',x:[S("Lion's Might",[['eatk','A',R(4)]]),S('Lion Intimidation',[['taken','A',R(4)]]),S('Leader Inspiration',[['hp','A',R(5)]])]},
+ {n:'Mia',g:3,t:'L',x:[S('Bad Luck Streak',[['vuln','A',R(10),{p:.5}]]),S('Lucky Charm',[['dmg','A',R(10),{p:.5}]]),S('Ritual Deciphering',[['taken','A',R(10),{p:.4}]])]},
+ {n:'Greg',g:3,t:'M',x:[S('Sword of Justice',[['dmg','A',R(8),{p:.2,du:3}]]),S('Deterrence of Law',[['edmg','A',R(10),{p:.2,du:2}]]),S('Law and Order',[['hp','A',R(5)]])]},
+ {n:'Ahmose',g:4,t:'I',x:[S('Viper Formation',[['taken','LM',[10,15,20,25,30],{ev:4,du:2}],['taken','I',[10,25,40,55,70],{ev:4,du:2}]]),S('Prayer of Flame',[['dmg','I',R(20)]]),S('Blade of Light',[['dmg','I',R(12)],['vuln','A',R(5)]])]},
+ {n:'Reina',g:4,t:'L',x:[S("Assassin's Instinct",[['dmg','A',[10,15,20,25,30]]]),S('Swift Jive',[['taken','A',R(4)]]),S('Shadow Blade',[['dmg','L',[120,140,160,180,200],{p:.25}]])]},
+ {n:'Lynn',g:4,t:'M',x:[S('Song of Lion',[['dmg','A',R(10),{p:.4}]]),S('Melancholic Ballad',[['edmg','A',R(4)]]),S('Oonai Cadenza',[['atk','M',R(1),{st:3}]])]},
+ {n:'Hector',g:5,t:'I',x:[S('Survival Instincts',[['taken','A',R(10),{p:.4}]]),S('Rampant',[['dmg','I',[100,125,150,175,200],{dc:10}],['dmg','M',R(20),{dc:10}]]),S('Blitz',[['dmg','A',[120,140,160,180,200],{p:.25}]])]},
+ {n:'Norah',g:5,t:'L',x:[S('Combined Arms',[['taken','IM',R(3)],['dmg','IM',R(3)]]),S('Sneak Strike',[['dmg','L',R(20),{p:.2}]]),S('Momentum',[['dmg','A',R(5),{ev:5,du:2}],['taken','A',R(5),{ev:5,du:2}]])]},
+ {n:'Gwen',g:5,t:'M',x:[S('Eagle Vision',[['vuln','A',R(5)]]),S('Air Dominance',[['dmg','A',R(20),{ev:5}]]),S('Blastmaster',[['dmg','A',R(10),{ev:4}]])]},
+ {n:'Wu Ming',g:6,t:'I',x:[S("Shadow's Evasion",[['taken','I',R(5)]]),S('Crescent Uplift',[['dmg','A',R(4)]]),S('Elemental Resonance')]},
+ {n:'Renee',g:6,t:'L',x:[S('Nightmare Trace',[['dmg','L',R(40),{ev:2}]]),S('Dreamcatcher',[['dmg','L',R(30),{ev:2}]]),S('Dreamslice',[['dmg','A',R(15),{ev:2}]])]},
+ {n:'Wayne',g:6,t:'M',x:[S('Thunder Strike',[['dmg','A',R(20),{ev:4}]]),S('Roundabout Hit',[['dmg','M',R(8),{ev:2,vs:'L'}],['dmg','M',R(4),{ev:2,vs:'M'}]]),S('Fleet',[['dmg','A',[100,100,100,100,100],{p:P}]])]},
+ {n:'Edith',g:7,t:'I',x:[S('Strategic Balance',[['taken','M',R(4)],['dmg','L',R(4)]]),S('Ironclad',[['taken','I',R(4)]]),S('Steel Sentinel',[['hp','A',R(5)]])]},
+ {n:'Gordon',g:7,t:'L',x:[S('Venom Infusion',[['dmg','L',R(20),{ev:2}],['edmg','A',R(4),{ev:2}]]),S('Chemical Terror',[['dmg','L',R(30),{ev:3}],['edmg','A',R(6),{ev:3}]]),S('Toxic Release',[['vuln','I',R(6),{ev:4,du:2}],['edmg','M',R(6),{ev:4,du:2}]])]},
+ {n:'Bradley',g:7,t:'M',x:[S("Veteran's Might",[['atk','A',R(5)]]),S('Power Shot',[['dmg','A',R(6),{vs:'L'}],['dmg','A',R(5),{vs:'I'}]]),S('Tactical Assistance',[['dmg','A',R(6),{ev:4,du:2}]])]},
+ {n:'Gatot',g:8,t:'I',x:[S('Golden Guard',[['def','I',R(6)]]),S("King's Bestowal",[['taken','I',R(3)]]),S('Royal Legion',[['eatk','A',R(5)]])]},
+ {n:'Sonya',g:8,t:'L',x:[S('Treasure Hunter',[['dmg','A',R(4)]]),S('Bounty Temptation',[['dmg','L',R(15),{ev:2}],['atk','A',R(5),{ev:2}]]),S('Torrential Impact',[['dmg','L',R(50),{ev:5}]])]},
+ {n:'Hendrik',g:8,t:'M',x:[S("Worm's Ravage",[['edef','A',R(5)]]),S('Armor of Barnacles',[['def','A',R(6),{ev:4,du:2}]]),S("Dragon's Heir",[['dmg','M',R(8),{ev:3}]])]},
+ {n:'Magnus',g:9,t:'I',x:[S('Rapacious',[['atk','A',R(5)]]),S('Iron Phalanx',[['def','I',R(10),{p:.4}]]),S('Iceman',[['taken','I',R(2)],['dmg','M',R(2)]])]},
+ {n:'Fred',g:9,t:'L',x:[S('Hydraulic Suppression',[['eleth','A',R(4)]]),S('Acidification',[['vuln','I',R(4)]]),S('Floodbringer',[['dmg','L',R(40),{ev:4}],['edmg','A',R(4),{ev:4,du:2}]])]},
+ {n:'Xura',g:9,t:'M',x:[S('Fungal Fog',[['taken','A',R(4)]]),S('Piercing Arrow',[['dmg','M',R(20),{ev:2}],['vuln','A',R(5),{ev:2}]]),S('Unorthodoxy',[['dmg','M',R(3)],['taken','M',R(2)]])]},
+ {n:'Gregory',g:10,t:'I',x:[S('Legion of the Sun',[['atk','A',R(3)],['def','A',R(2)]]),S('Charged Assault',[['dmg','A',[100,100,100,100,100],{p:P}]]),S('Unbroken',[['taken','I',R(4)]])]},
+ {n:'Freya',g:10,t:'L',x:[S('Fog of War',[['eatk','A',R(4)]]),S('Blood Moon Scythe',[['dmg','L',R(20),{p:.5}]]),S("Night's Vengeance",[['taken','IM',R(3)],['dmg','IM',R(3)]])]},
+ {n:'Blanchette',g:10,t:'M',x:[S('Armed to the Teeth',[['leth','A',R(5)]]),S('Blood Hunter',[['dmg','M',R(15),{ev:3}]]),S('Crimson Sniper',[['dmg','M',R(8),{ev:2,vs:'L'}],['dmg','M',R(4),{ev:2,vs:'M'}]])]},
+ {n:'Eleonora',g:11,t:'I',x:[S('Scorching Sun',[['hp','A',R(5)]]),S('Solaris Nexus',[['taken','I',R(2)],['dmg','M',R(2)]]),S('Soaring Flame',[['dmg','A',R(5),{ev:5,du:2}],['taken','A',R(5),{ev:5,du:2}]])]},
+ {n:'Lloyd',g:11,t:'L',x:[S('Bird Invasion',[['eleth','A',R(4)]]),S('Iceflare Bomb',[['atk','L',R(30),{ev:3}],['eleth','A',R(6),{ev:3}]]),S('Ingenious Mastery',[['leth','A',R(10),{p:.4}]])]},
+ {n:'Rufus',g:11,t:'M',x:[S('Inferno Regiment',[['atk','A',R(5)]]),S('Armor Crush',[['dmg','M',R(12)],['vuln','A',R(5)]]),S('Wrathful Quake',[['eleth','A',R(10),{p:.2,du:2}]])]},
+ {n:'Hervor',g:12,t:'I',x:[S('Call For Blood',[['leth','A',R(5)]]),S('Undying',[['taken','I',R(5)]]),S('Battlethirsty',[['taken','I',R(3)],['dmg','I',R(2)]])]},
+ {n:'Karol',g:12,t:'L',x:[S('In the Wings',[['taken','A',R(4)]]),S('Shieldbreaker',[['dmg','A',R(6),{vs:'L'}],['dmg','A',R(5),{vs:'I'}]]),S('Standard of Ages',[['atk','A',R(3)],['def','A',R(2)]])]},
+ {n:'Ligeia',g:12,t:'M',x:[S('Nerf Poison',[['edef','A',R(5)]]),S('Corrosion',[['dmg','M',R(20),{ev:2}],['vuln','A',R(5),{ev:2}]]),S('Toxic Tip',[['dmg','M',R(20),{ev:2}],['edmg','A',R(4),{ev:2}]])]},
+ {n:'Gisela',g:13,t:'I',x:[S('Alloyed Defense',[['def','I',R(6)]]),S('Scavengeworks',[['def','A',R(10),{p:.4}]]),S('Trial Shield',[['taken','A',R(10),{p:.4}]])]},
+ {n:'Flora',g:13,t:'L',x:[S('Enmiring Vines',[['vuln','A',R(10),{p:.5}]]),S('Plantage',[['taken','I',R(5)],['dmg','L',R(5)]]),S('Confusion Pollen',[['vuln','I',R(6),{ev:4,du:2}],['edmg','M',R(6),{ev:4,du:2}]])]},
+ {n:'Vulcanus',g:13,t:'M',x:[S('Raging Storm',[['eatk','A',R(4)]]),S('Breaker Steel',[['dmg','A',R(20),{ev:5}],['vuln','A',[5,7.5,10,12.5,15],{ev:5}]]),S('True Strike',[['edef','IL',R(12),{ev:3}],['atk','M',R(12),{ev:3}]])]},
+ {n:'Elif',g:14,t:'I',x:[S('Shackling Veil',[['eatk','A',R(5)]]),S('Slash Formation',[['atk','A',R(3)],['def','A',R(2)]]),S('Enchanting Tapestry',[['taken','I',R(3)]])]},
+ {n:'Dominic',g:14,t:'L',x:[S('Mystic Mechanism',[['dmg','A',R(4)]]),S('Spiky Assault',[['dmg','L',R(12)],['vuln','A',R(5)]]),S('Mirror Maze',[['taken','IM',R(3)],['dmg','IM',R(3)]])]},
+ {n:'Cara',g:14,t:'M',x:[S('Smoky Encounter',[['eleth','A',R(4)]]),S('Mech Pet',[['dmg','A',[10,15,20,25,30]]]),S("Witch's Wrath",[['dmg','M',R(8),{ev:2,vs:'L'}],['dmg','M',R(4),{ev:2,vs:'M'}]])]},
+ {n:'Hank',g:15,t:'I',x:[S('Roaring Rage',[['leth','A',R(5)]]),S('Flying Sparks',[['dmg','A',R(5),{ev:5}],['taken','A',R(5),{ev:5}]]),S('Raging Force',[['vuln','I',R(6),{ev:4,du:2}],['edmg','M',R(6),{ev:4,du:2}]])]},
+ {n:'Estrella',g:15,t:'L',x:[S('Corrosive Color',[['edef','A',R(5)]]),S('Dawn Canvas',[['atk','A',R(3)],['def','A',R(2)]]),S('Splendid Scene',[['taken','I',R(5)],['dmg','L',R(5)]])]},
+ {n:'Viveca',g:15,t:'M',x:[S('Nightfall Legion',[['atk','A',R(5)]]),S('Shadow World',[['dmg','M',R(20),{p:.2}]]),S('Children of the Mist',[['taken','I',R(2)],['dmg','M',R(2)]])]},
+ {n:'Seigel',g:16,t:'I',x:[S('Armor of Night',[['hp','A',R(5)]]),S("Night's Defense",[['atk','I',R(-4)],['eatk','LM',R(7)]]),S('Vanguard of Eternity',[['taken','I',R(5)]])]},
+ {n:'Ursar',g:16,t:'L',x:[S('Forest Spores',[['eatk','A',R(5)]]),S('Horn of the Ancients',[['leth','LM',R(6),{ev:2,du:2}],['edef','A',R(6),{ev:2}]]),S('Poison Tips',[['dmg','L',R(20),{ev:2}],['vuln','A',R(5),{ev:2}]])]},
+ {n:'Aisling',g:16,t:'M',x:[S('Songs of the Ancestors',[['dmg','A',R(4)]]),S('Rock Strom',[['dmg','M',R(30),{ev:3}],['edmg','A',R(6),{ev:3}]]),S('Forest Fury',[['dmg','M',R(8),{ev:3}]])]},
+ {n:'Aiden',g:17,t:'I',x:[S('Starfire Wall',[['def','A',R(10),{p:.4}]]),S('Scarlet Brigade',[['atk','A',R(3)],['def','A',R(2)]]),S('Rush',[['atk','A',R(10),{ev:2}]])]},
+ {n:'Bertha',g:17,t:'L',x:[S('Dissection',[['leth','A',R(5)]]),S('Vengeance',[['dmg','L',R(25),{ev:2}],['atk','M',R(6),{ev:2}]]),S('Lethal Precision',[['dmg','L',R(12)],['vuln','A',R(5)]])]},
+ {n:'Eleanor',g:17,t:'M',x:[S('Theoretical Advantage',[['edef','A',R(5)]]),S('Pierce Caliber',[['dmg','M',R(20),{p:.5}],['dmg','M',R(8),{p:.5}]]),S('Trajectoids',[['dmg','M',R(12),{ev:2,vs:'M'}]])]},
+ {n:'Jordan',g:18,t:'I',x:[S('Blessings of the Deep',[['hp','A',R(5)]]),S('Tsunami Strike',[['leth','LM',R(6),{ev:2}],['edef','A',R(6),{ev:2}]]),S('Unbreakable Dam',[['taken','I',R(5)]])]},
+ {n:'Nikola',g:18,t:'L',x:[S('Static Frailty',[['eatk','A',R(5)]]),S('Static Tips',[['dmg','L',R(12)],['edef','A',R(5)]]),S('Resonance Upgrade',[['taken','IM',R(3)],['dmg','IM',R(3)]])]},
+ {n:'Aisha',g:18,t:'M',x:[S('Fire Armor',[['taken','A',R(5)]]),S('Scorching Tides',[['edef','IL',R(12),{ev:3}],['atk','M',R(12),{ev:3}]]),S('Light Blast',[['dmg','M',R(20),{p:.2}]])]},
+];
+const HMAP=Object.fromEntries(HEROES.map(h=>[h.n,h]));
+/* ===================== ค่าสถานะฮีโร่ + อุปกรณ์เสริม (widget) =====================
+ a  = ค่าออกรบ โจมตี% = ป้องกัน% (บวกให้ทหารสายเดียวกับฮีโร่ · ค่าที่ระดับสูงสุดตาม wiki)
+ gl = อุปกรณ์เสริม Lv10: สังหาร% = พลังชีวิต% (บวกให้ทหารสายเดียวกับฮีโร่ · คิดตามสัดส่วนเลเวล)
+ gs = โบนัสพิเศษของอุปกรณ์ [เงื่อนไข, ค่าสถานะ] R=ตอนนำระดม D=ตอนป้องกัน T=ทุกครั้ง · 5/7.5/10/12.5/15% ตามเลเวลสกิล */
+const GEN_A={1:200.16,2:240.19,3:290.23,4:370.29,5:444.35,6:540.43,7:650.52,8:780.62,9:940.75,10:1110.88,11:1281.02,12:1451.16,13:1621.29,14:1791.43,15:1961.56,16:2131.70,17:2301.84,18:2471.97};
+const GEN_G={1:50,2:60,3:70,4:92.5,5:111,6:133.5,7:160.5,8:193,9:232,10:277.5,11:320,12:362.5,13:405,14:447.5,15:490,16:532.5,17:575,18:617.5};
+const GEAR={
+ Jeronimo:['Dawnbreak','R','atk'],Natalia:['Gale Force','R','leth'],Molly:['Yeti Spirit','D','leth'],Zinman:['Woodpecker','D','atk'],
+ Flint:['Dragonbane','D','atk'],Philly:['Pharmacologica','D','hp'],Alonso:['Captain Ahab','R','leth'],
+ Logan:['First of Steel','D','def'],Mia:['Fate Crystal','R','atk'],Greg:['State Edict','R','hp'],
+ Ahmose:["Guardian's Relic",'D','hp'],Reina:['Ninjaken - Raikiri','R','leth'],Lynn:["Ella's Tear",'D','leth'],
+ Hector:['Steel Fangs','D','atk'],Norah:['Snow Cruiser','D','def'],Gwen:['Wings of Hope','R','leth'],
+ 'Wu Ming':['Dragonslayer','D','def'],Renee:['Illusion Magiball','R','leth'],Wayne:['Power Boomerang','D','leth'],
+ Edith:['Charm Toolkit','D','hp'],Gordon:['Bonecrux Venom','R','leth'],Bradley:['Thunder Cannon','D','atk'],
+ Gatot:['Golden Fang','D','def'],Sonya:['Mangrove Frog','D','leth'],Hendrik:['Abyss Driver','R','atk'],
+ Magnus:['Storm Axe','D','hp'],Fred:['Blazebearer','R','atk'],Xura:['Witch Mask','D','atk'],
+ Gregory:['Solarsword','D','leth'],Freya:['Blood Moon Scythe','D','def'],Blanchette:['Wolf Hunter','R','leth'],
+ Eleonora:['Scepter of Solaris','D','hp'],Lloyd:['Mastercraft Treasure','D','atk'],Rufus:['Meteor Blaster','T','atk'],
+ Hervor:['Hammer of Sathla','D','def'],Karol:['Spirit of Winterwind','R','atk'],Ligeia:['Fateweaver','D','leth'],
+ Gisela:['Helacore','D','atk'],Flora:['Kernel of Plenty','D','hp'],Vulcanus:['Doom Sigil','R','atk'],
+ Elif:['Moonscar','D','def'],Dominic:['Exobox','R','leth'],Cara:['Velocomet','D','leth'],
+ Hank:['Roaring Rage','D','hp'],Estrella:['Dreamscape Painting','D','atk'],Viveca:['Dark Star','R','leth'],
+ Seigel:['Blacklight Halberd','D','leth'],Ursar:['Progenitor Spear','R','atk'],Aisling:['Cord of Destiny','D','def'],
+ Aiden:['Burning Fist','D','atk'],Bertha:['Adjudicator','D','leth'],Eleanor:['The Warden','R','leth'],
+ Jordan:['Wavebreaker','D','def'],Nikola:['Stormbolt','R','def'],Aisha:['Glitterflame Staff','D','leth']
+};
+const GEAR_OV={Jeronimo:[260.2,62.5],Natalia:[200.16,55.5]};
+function heroStat(n){const h=HMAP[n]; if(!h) return null;
+  if(h.r==='R') return {a:90.07,gl:0}; if(h.r==='E') return {a:n==='Gina'?110.08:140.11,gl:0};
+  const ov=GEAR_OV[n]; const g=GEAR[n];
+  return {a:ov?ov[0]:GEN_A[h.g], gl:ov?ov[1]:GEN_G[h.g], gn:g[0], gc:g[1], gs:g[2]};
+}
+const gearSkillLv=l=>Math.ceil(l/2);              // อุปกรณ์ Lv1-2 = สกิล 1 … Lv9-10 = สกิล 5
+const gearSpecial=l=>l>0?2.5+2.5*gearSkillLv(l):0; // 5 / 7.5 / 10 / 12.5 / 15 %
+const CTXN={R:'ตอนนำระดม',D:'ตอนป้องกัน',T:'ทุกครั้ง'};
+const SELF=['atk','def','leth','hp','dmg','taken'], ENEMY=['eatk','edef','eleth','edmg','vuln'];
+const STATN={atk:'โจมตี',def:'ป้องกัน',leth:'สังหาร',hp:'พลังชีวิต',dmg:'ดาเมจ',taken:'ลดดาเมจที่รับ',eatk:'ศัตรูโจมตี−',edef:'ศัตรูป้องกัน−',eleth:'ศัตรูสังหาร−',edmg:'ศัตรูดาเมจ−',vuln:'ศัตรูรับดาเมจ+'};
+
+/* ===================== UI ===================== */
+let MODE='solo';
+const DEFAULTS={
+ A:{troops:{I:[40000,10,5],L:[20000,10,5],M:[40000,10,5]},rep:{I:[300,300,200,200],L:[300,300,200,200],M:[300,300,200,200]},
+    heroes:[['Jeronimo',[5,5,5]],['Molly',[5,5,5]],['Alonso',[5,5,5]]],join:[['Jessie',5],['Jessie',5],['Jeronimo',5],['Jessie',5]]},
+ D:{troops:{I:[40000,10,5],L:[20000,10,5],M:[40000,10,5]},rep:{I:[300,300,200,200],L:[300,300,200,200],M:[300,300,200,200]},
+    heroes:[['Natalia',[5,5,5]],['Philly',[5,5,5]],['Zinman',[5,5,5]]],join:[['Sergey',5],['Patrick',5],['Bahiti',5],['Jessie',5]]}
+};
+function heroOptions(sel){
+  let o='<option value="">— ไม่ใส่ —</option>';
+  const grp=[['Rare',HEROES.filter(h=>h.r==='R')],['Epic',HEROES.filter(h=>h.r==='E')]];
+  for(let g=1;g<=18;g++) grp.push(['Gen '+g,HEROES.filter(h=>!h.r&&h.g===g)]);
+  for(const [gl,list] of grp){ if(!list.length)continue;
+    o+=`<optgroup label="${gl}">`+list.map(h=>`<option value="${h.n}" ${h.n===sel?'selected':''}>${h.n} · ${TYN[h.t]}</option>`).join('')+'</optgroup>'; }
+  return o;
+}
+// "100k" → 100000 · "1.5m" → 1500000 · "40,000" → 40000
+function parseNum(s){s=String(s).trim().toLowerCase().replace(/[, ]/g,''); const m=s.match(/^([\d.]+)([km]?)$/); if(!m) return 0;
+  return Math.max(0,Math.round(parseFloat(m[1])*(m[2]==='k'?1e3:m[2]==='m'?1e6:1)))||0;}
+function short(n){ if(n>=1e6&&n%1e4===0) return +(n/1e6).toFixed(2)+'m'; if(n>=1e3&&n%100===0) return +(n/1e3).toFixed(1)+'k'; return String(n);}
+const lvOpts=v=>[1,2,3,4,5].map(i=>`<option ${i===v?'selected':''}>${i}</option>`).join('');
+function tierOpts(v){return [1,2,3,4,5,6,7,8,9,10,11,12].map(i=>`<option value="${i}" ${i===v?'selected':''}>${i===12?'T12 Exalted':'T'+i}</option>`).join('')}
+function fcOpts(v){return [0,1,2,3,4,5,6,7,8,9,10].map(i=>`<option value="${i}" ${i===v?'selected':''}>${i?'FC'+i:'—'}</option>`).join('')}
+
+function renderSide(id,cfg){
+  const el=document.getElementById(id==='A'?'sideA':'sideD');
+  const isA=id==='A';
+  const title = MODE==='solo' ? (isA?'ฝั่งโจมตี':'ฝั่งป้องกัน') : (isA?'ฝั่งโจมตี · ผู้นำระดม':'ฝั่งป้องกัน · รักษาเมือง (Garrison)');
+  let h=`<h2>${title}</h2>
+  <h3>ทหาร ${MODE==='rally'?'(รวมทั้งกองระดม/ทั้งเมือง)':''}</h3>`;
+  const tot=TY.reduce((s,t)=>s+cfg.troops[t][0],0), rr=TY.map(t=>tot?+(cfg.troops[t][0]/tot*100).toFixed(1):0);
+  h+=`<div class="quick">
+    <label>ยอดรวม <input type="text" inputmode="decimal" data-q="total" value="${short(tot)}" style="width:90px;font-weight:700"></label>
+    <span>สัดส่วน</span>
+    <label>ราบ <input type="number" data-q="I" value="${rr[0]}" min="0" style="width:56px"></label>
+    <label>หอก <input type="number" data-q="L" value="${rr[1]}" min="0" style="width:56px"></label>
+    <label>ธนู <input type="number" data-q="M" value="${rr[2]}" min="0" style="width:56px"></label>
+    <button class="btn" data-q="ok" style="padding:5px 16px">ตกลง</button>
+    <div class="presets">ด่วน: ${['10,10,80','20,20,60','40,20,40','50,20,30','60,20,20','34,33,33'].map(p=>`<button class="btn ghost" data-preset="${p}">${p.replace(/,/g,'/')}</button>`).join('')}</div>
+    <div class="note">พิมพ์ยอดรวม (100k, 1.5m ได้) ใส่สัดส่วน 3 ช่อง แล้วกด “ตกลง” หรือ Enter · สัดส่วนรวมไม่ถึง 100 ก็ได้ ระบบเทียบให้เอง</div>
+  </div>
+  <div class="scroll"><table><tr><th>สาย</th><th>จำนวน</th><th>เทียร์</th><th>FC</th></tr>`;
+  for(const t of TY){const [c,ti,fc]=cfg.troops[t];
+    h+=`<tr><td>${TYN[t]}</td><td><input type="text" inputmode="decimal" style="width:96px" data-k="cnt" data-t="${t}" value="${short(c)}"></td>
+    <td><select data-k="tier" data-t="${t}">${tierOpts(ti)}</select></td>
+    <td><select data-k="fc" data-t="${t}" ${ti===10||ti===11?'':'disabled'}>${fcOpts(fc)}</select></td></tr>`;}
+  h+=`<tr><td><b>รวม</b></td><td colspan="3"><b>${fmt(tot)}</b> นาย · ราบ ${rr[0]}% · หอก ${rr[1]}% · ธนู ${rr[2]}%</td></tr>`;
+  h+=`</table></div>
+  <h3>ค่าสถานะ % ${cfg.incl?'— ยอดรวมจากรายงานการรบ':'— โบนัสอื่นที่ไม่ใช่ฮีโร่ (เทค ชาร์ม เกียร์ผู้นำ ฯลฯ)'} ${MODE==='rally'?(isA?'· ของผู้นำ':'· ของคนที่บัฟสูงสุด'):''}</h3>
+  <div class="note" style="margin-bottom:6px">โบนัสทหารเป็น % ที่ท้ายรายงานการรบ (รายงานเดียวกันมีของทั้งเราและศัตรู) · <b>โจมตี</b> = ตีแรงขึ้น · <b>ป้องกัน</b> = โดนตีเบาลง · <b>สังหาร</b> = ดาเมจทะลุเกราะ (ความแรง) · <b>พลังชีวิต</b> = เลือด<br>
+  ${cfg.incl?'กรอกตัวเลขจากรายงานตรงๆ ได้เลย':'ถ้าจะกรอกตัวเลขจากรายงานตรงๆ ให้ติ๊กช่องข้างล่าง เพราะในรายงานรวมค่าฮีโร่กับอุปกรณ์เสริมไว้แล้ว'}</div>
+  <label class="note" style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input type="checkbox" data-k="incl" ${cfg.incl?'checked':''}> ค่าที่กรอกเป็นยอดรวมจากรายงานการรบแล้ว (ไม่บวกค่าฮีโร่/อุปกรณ์เสริมซ้ำ)</label>
+  <div class="scroll"><table><tr><th>สาย</th><th>โจมตี%</th><th>ป้องกัน%</th><th>สังหาร%</th><th>พลังชีวิต%</th></tr>`;
+  for(const t of TY){h+=`<tr><td>${TYN[t]}</td>`+[0,1,2,3].map(i=>`<td><input class="pct" type="number" data-k="rep" data-t="${t}" data-i="${i}" value="${cfg.rep[t][i]}" step="1"></td>`).join('')+'</tr>';}
+  const bf=cfg.buf||{atk:0,def:0,leth:0,hp:0};
+  h+=`</table></div>
+  <h3>บัฟไอเทม (+10% / +20%) · ใช้กับทหารทุกสาย</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px 14px">${['atk','def','leth','hp'].map(s=>`<label>${STATN[s]} <select data-k="buf" data-s="${s}">${[0,10,20].map(v=>`<option value="${v}" ${v===(bf[s]||0)?'selected':''}>${v?'+'+v+'%':'ไม่มี'}</option>`).join('')}</select></label>`).join('')}</div>
+  <div class="note">บวกเข้ากับค่าสถานะ % ข้างบน · ถ้าตัวเลขที่ลอกจากรายงานมีบัฟนี้อยู่แล้ว ให้ตั้งเป็น "ไม่มี" จะได้ไม่นับซ้ำ</div>
+  <h3>ฮีโร่ 3 ตัว ${MODE==='rally'?(isA?'(ผู้นำ · ใช้ครบ 9 สกิล)':'(เจ้าของเมือง · ใช้ครบ 9 สกิล)'):''}</h3>`;
+  cfg.heroes.forEach(([n,lv,gl],i)=>{ const hero=HMAP[n], hs=heroStat(n); gl=gl??10;
+    let stat='';
+    if(hs){ const ty=TYN[hero.t];
+      stat=`<div class="lv"><span>⚔ ค่าออกรบ → ${ty}: โจมตี +${hs.a}% · ป้องกัน +${hs.a}%</span></div>`;
+      if(hs.gn){ const gm=hs.gl*gl/10;
+        stat+=`<div class="lv"><label>🛡 อุปกรณ์เสริม ${hs.gn} <select data-k="gear" data-i="${i}">${[0,1,2,3,4,5,6,7,8,9,10].map(x=>`<option value="${x}" ${x===gl?'selected':''}>${x?'Lv'+x:'ไม่มี'}</option>`).join('')}</select></label>
+        ${gl?`<span>→ ${ty}: สังหาร +${+gm.toFixed(2)}% · พลังชีวิต +${+gm.toFixed(2)}% · ${STATN[hs.gs]} +${gearSpecial(gl)}% ${CTXN[hs.gc]}${gearCtxOn(hs.gc,id)?'':' (ไม่มีผลในฝั่งนี้)'}</span>`:''}</div>`; }
+    }
+    h+=`<div class="hero"><span class="tag">ช่อง ${i+1}</span><select class="h" data-k="hero" data-i="${i}">${heroOptions(n)}</select>
+    ${stat}
+    <div class="lv">${hero?hero.x.map((s,j)=>`<label title="${skillDesc(s)}">${s.k} <select data-k="hlv" data-i="${i}" data-j="${j}">${lvOpts(lv[j]||5)}</select></label>`).join(''):'<span>—</span>'}</div></div>`;});
+  h+=`<div class="joiners ${MODE==='rally'?'':'hide'}"><h3>ผู้ร่วม 4 คน · นับเฉพาะสกิลแรกของฮีโร่ช่องแรก</h3>`;
+  cfg.join.forEach(([n,lv],i)=>{const hero=HMAP[n];
+    h+=`<div class="hero"><span class="tag">คนที่ ${i+1}</span><select class="h" data-k="join" data-i="${i}">${heroOptions(n)}</select>
+    <select data-k="jlv" data-i="${i}" title="เลเวลสกิล">${lvOpts(lv)}</select>
+    <div class="lv">${hero&&hero.x[0]?`<span title="${skillDesc(hero.x[0])}">${hero.x[0].k}: ${skillDesc(hero.x[0],lv)}</span>`:''}</div></div>`;});
+  h+='</div>';
+  el.innerHTML=h;
+}
+function skillDesc(s,lv){
+  if(!s.f.length) return 'ไม่มีผลในการรบ';
+  return s.f.map(([st,who,v,o={}])=>{
+    const val = lv? v[lv-1]+'%' : v.join('/')+'%';
+    let w = who==='A'?'':' ('+who.split('').map(x=>TYN[x]).join('+')+')';
+    let x=[]; if(o.p) x.push('โอกาส '+(Array.isArray(o.p)?o.p.map(q=>q*100).join('/'):o.p*100)+'%');
+    if(o.ev) x.push('ทุก '+o.ev+' เทิร์น'); if(o.du) x.push('นาน '+o.du); if(o.vs) x.push('ใส่'+TYN[o.vs]);
+    if(o.st) x.push('สะสมทุก '+o.st+' เทิร์น'); if(o.dc) x.push('ลดลงจนหมดใน '+o.dc+' เทิร์น');
+    return `${STATN[st]} ${val}${w}${x.length?' ['+x.join(', ')+']':''}`;
+  }).join(' · ');
+}
+let CFG=loadCfg();
+function loadCfg(){try{const s=localStorage.getItem('wos_sim_cfg'); if(s){const c=JSON.parse(s); if(c.A&&c.D){MODE=c.mode||'solo';
+  for(const sd of [c.A,c.D]) if(sd.buf) for(const k in sd.buf) sd.buf[k]=Math.min(20,Math.round((sd.buf[k]||0)/10)*10); // ค่าเก่าที่เกิน 20% ปรับเข้า 0/10/20
+  return c;}}}catch(e){} return JSON.parse(JSON.stringify(DEFAULTS));}
+function saveCfg(){try{localStorage.setItem('wos_sim_cfg',JSON.stringify({...CFG,mode:MODE}))}catch(e){}}
+function bindSide(id){
+  const el=document.getElementById(id==='A'?'sideA':'sideD');
+  const quickApply=()=>{const c=CFG[id], q=s=>el.querySelector(`[data-q="${s}"]`);
+    const T=parseNum(q('total').value), r=TY.map(t=>Math.max(0,+q(t).value||0)), S=r[0]+r[1]+r[2];
+    if(!T||!S){ q('total').style.outline='2px solid var(--atk)'; return; }
+    TY.forEach((t,i)=>c.troops[t][0]=Math.round(T*r[i]/S)); c.troops.I[0]+=T-TY.reduce((s,t)=>s+c.troops[t][0],0);
+    saveCfg(); rerender(); };
+  el.onclick=e=>{const d=e.target.dataset;
+    if(d.preset){const p=d.preset.split(','); TY.forEach((t,i)=>el.querySelector(`[data-q="${t}"]`).value=p[i]); quickApply();}
+    if(d.q==='ok') quickApply(); };
+  el.onkeydown=e=>{ if(e.key==='Enter'&&e.target.dataset.q){ e.preventDefault(); quickApply(); } };
+  el.onchange=e=>{const c=CFG[id], d=e.target.dataset, v=e.target.value;
+    if(d.k==='cnt'){c.troops[d.t][0]=parseNum(v); rerender();}
+    if(d.k==='total'){const T=parseNum(v), cur=TY.reduce((s,t)=>s+c.troops[t][0],0);
+      const r=cur?TY.map(t=>c.troops[t][0]/cur):[.5,.2,.3];
+      TY.forEach((t,i)=>c.troops[t][0]=Math.round(T*r[i])); c.troops.I[0]+=T-TY.reduce((s,t)=>s+c.troops[t][0],0); rerender();}
+    if(d.k==='ratio'){const T=TY.reduce((s,t)=>s+c.troops[t][0],0), r=Math.min(100,Math.max(0,+v||0))/100;
+      const others=TY.filter(t=>t!==d.t), os=others.reduce((s,t)=>s+c.troops[t][0],0);
+      c.troops[d.t][0]=Math.round(T*r);
+      others.forEach(t=>c.troops[t][0]=Math.round(T*(1-r)*(os?c.troops[t][0]/os:.5)));
+      const diff=T-TY.reduce((s,t)=>s+c.troops[t][0],0); c.troops[others[0]][0]+=diff; rerender();}
+    if(d.k==='tier'){c.troops[d.t][1]=+v; rerender();}
+    if(d.k==='fc') c.troops[d.t][2]=+v;
+    if(d.k==='rep') c.rep[d.t][+d.i]=+v||0;
+    if(d.k==='hero'){c.heroes[+d.i]=[v,[5,5,5],10]; rerender();}
+    if(d.k==='gear'){c.heroes[+d.i][2]=+v; rerender();}
+    if(d.k==='incl'){c.incl=e.target.checked; rerender();}
+    if(d.k==='buf'){c.buf=c.buf||{atk:0,def:0,leth:0,hp:0}; c.buf[d.s]=+v;}
+    if(d.k==='hlv') c.heroes[+d.i][1][+d.j]=+v;
+    if(d.k==='join'){c.join[+d.i][0]=v; rerender();}
+    if(d.k==='jlv'){c.join[+d.i][1]=+v; rerender();}
+    saveCfg();
+  };
+}
+function rerender(){renderSide('A',CFG.A);renderSide('D',CFG.D);
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));}
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{MODE=b.dataset.m;saveCfg();rerender();});
+document.getElementById('swap').onclick=()=>{[CFG.A,CFG.D]=[CFG.D,CFG.A];saveCfg();rerender();};
+bindSide('A');bindSide('D');rerender();
+
+/* ===================== ตัวจำลอง ===================== */
+function gearCtxOn(ctx,role){return ctx==='T'||(ctx==='D'&&role==='D')||(ctx==='R'&&role==='A'&&MODE==='rally');}
+// รวม % ค่าสถานะ: โบนัสอื่น + ค่าออกรบฮีโร่ + อุปกรณ์เสริม แล้วคูณโบนัสพิเศษ (สูตร wiki: รวม×(1+พิเศษ)+พิเศษ)
+function statPct(c,role){
+  const p={}; for(const t of TY) p[t]=[...c.rep[t]]; // [atk,def,leth,hp] หน่วย %
+  const bf=c.buf||{}; for(const t of TY) ['atk','def','leth','hp'].forEach((s,i)=>p[t][i]+=Math.min(20,bf[s]||0)); // บัฟไอเทม สูงสุด +20%
+  const sp={atk:0,def:0,leth:0,hp:0}, info=[];
+  if(!c.incl){
+    c.heroes.forEach(([n,,gl])=>{const h=HMAP[n], hs=heroStat(n); if(!hs)return; gl=gl??10;
+      p[h.t][0]+=hs.a; p[h.t][1]+=hs.a;
+      if(hs.gn&&gl){ p[h.t][2]+=hs.gl*gl/10; p[h.t][3]+=hs.gl*gl/10;
+        if(gearCtxOn(hs.gc,role)){ sp[hs.gs]+=gearSpecial(gl); info.push(`${n}: ${STATN[hs.gs]} +${gearSpecial(gl)}%`);} }
+    });
+    const k=['atk','def','leth','hp'];
+    for(const t of TY) k.forEach((s,i)=>{ if(sp[s]) p[t][i]=p[t][i]*(1+sp[s]/100)+sp[s]; });
+  }
+  return {p,sp,info};
+}
+function buildArmy(c,role){
+  const a={n:{},tier:{},base:{},ts:{},rep:{},fx:[],pct:statPct(c,role)};
+  for(const t of TY){const [cnt,tier,fc]=c.troops[t]; a.n[t]=Math.max(0,cnt); a.tier[t]=tier;
+    a.base[t]=troopBase(t,tier,tier>=10&&tier<=11?fc:0); a.ts[t]=troopSkill(t,tier,fc);
+    a.rep[t]=a.pct.p[t].map(x=>x/100);}
+  const used=[];
+  c.heroes.forEach(([n,lv])=>{const h=HMAP[n]; if(!h)return; h.x.forEach((s,j)=>{used.push({h:n,s:s.k,lv:lv[j]||5,src:'ฮีโร่'}); s.f.forEach(e=>a.fx.push({e,lv:lv[j]||5}));});});
+  if(MODE==='rally') c.join.forEach(([n,lv])=>{const h=HMAP[n]; if(!h||!h.x[0])return; used.push({h:n,s:h.x[0].k,lv,src:'ผู้ร่วม'}); h.x[0].f.forEach(e=>a.fx.push({e,lv}));});
+  a.used=used; return a;
+}
+function zero(){const o={};for(const s of [...SELF,...ENEMY])o[s]={I:0,L:0,M:0};o.vs={I:{I:0,L:0,M:0},L:{I:0,L:0,M:0},M:{I:0,L:0,M:0}};return o;}
+// คำนวณบัฟ/ดีบัฟเทิร์น t ; rnd=false → นับเฉพาะผลที่ติดตลอด
+function applyFx(army,mySelf,enemyDeb,t,rnd,state){
+  army.fx.forEach((f,idx)=>{
+    const [st,who,vals,o={}]=f.e; let v=vals[f.lv-1]/100;
+    if(o.ev){ if(!(t>=o.ev && (t-o.ev)%o.ev < (o.du||1))) return; if(!rnd) return; }
+    if(o.p!==undefined){ if(!rnd) return;
+      const p=Array.isArray(o.p)?o.p[f.lv-1]:o.p;
+      if(o.du>1){ const rem=state[idx]||0; if(rem>0) state[idx]=rem-1; else if(Math.random()<p) state[idx]=o.du-1; else return; }
+      else if(Math.random()>=p) return; }
+    if(o.st){ v*=Math.floor(t/o.st); if(!v) return; }
+    if(o.dc){ if(t>o.dc) return; v*=Math.pow(.85,t-1); }
+    const types= who==='A'?TY:who.split('');
+    for(const ty of types){
+      if(SELF.includes(st)){ if(st==='dmg'&&o.vs) mySelf.vs[ty][o.vs]+=v; else mySelf[st][ty]+=v; }
+      else enemyDeb[st][ty]+=v;
+    }
+  });
+}
+function effStats(a,me,deb){
+  const r={};
+  for(const t of TY){const [bA,bD,bL,bH]=a.base[t], rp=a.rep[t], ts=a.ts[t];
+    r[t]={
+      A:bA*(1+rp[0])*Math.max(.05,1+me.atk[t]-deb.eatk[t])*ts.atk,
+      D:bD*(1+rp[1])*Math.max(.05,1+me.def[t]-deb.edef[t])*ts.def,
+      L:bL*(1+rp[2])*Math.max(.05,1+me.leth[t]-deb.eleth[t]),
+      H:bH*(1+rp[3])*Math.max(.05,1+me.hp[t]),
+      out:Math.max(0,1+me.dmg[t])*Math.max(.05,1-deb.edmg[t])*ts.dmg,
+      inc:(1+deb.vuln[t])*Math.max(.1,1-me.taken[t])*ts.taken,
+      vs:me.vs[t]};}
+  return r;
+}
+function killsBy(X,Y,ex,ey,nX,nY,K){
+  const loss={I:0,L:0,M:0};
+  const front=TY.find(t=>nY[t]>=1); if(!front) return loss;
+  for(const i of TY){ if(nX[i]<1) continue;
+    const base=K*Math.sqrt(nX[i])*ex[i].A*ex[i].L*ex[i].out;
+    const hit=(j,frac)=>{ let k=frac*base/(ey[j].D*ey[j].H)*(1+ex[i].vs[j])*ey[j].inc;
+      if(COUNTER[i]===j) k*=1.10;
+      if(i==='L'&&j==='I'&&Y.ts.I.t7) k/=1.10; // Bands of Steel
+      loss[j]+=k; };
+    if(i==='L'&&X.ts.L.t7&&front==='I'&&nY.M>=1){hit('I',.8);hit('M',.2);} else hit(front,1);
+  }
+  return loss;
+}
+function battle(A,D,K,maxT,track){
+  const nA={...A.n}, nD={...D.n}, sA=[], sD=[], tl=[];
+  let t=0;
+  for(t=1;t<=maxT;t++){
+    const mA=zero(), mD=zero();
+    applyFx(A,mA,mD,t,true,sA); applyFx(D,mD,mA,t,true,sD);
+    const eA=effStats(A,mA,mA), eD=effStats(D,mD,mD);
+    // mA เก็บทั้งบัฟของ A (SELF) และดีบัฟที่ D ใส่ A (ENEMY) — effStats ใช้ชุดเดียวกัน
+    const lD=killsBy(A,D,eA,eD,nA,nD,K), lA=killsBy(D,A,eD,eA,nD,nA,K);
+    for(const ty of TY){nA[ty]=Math.max(0,nA[ty]-lA[ty]); if(nA[ty]<1)nA[ty]=0; nD[ty]=Math.max(0,nD[ty]-lD[ty]); if(nD[ty]<1)nD[ty]=0;}
+    const ta=nA.I+nA.L+nA.M, td=nD.I+nD.L+nD.M;
+    if(track) tl.push([ta,td]);
+    if(ta<=0||td<=0) break;
+  }
+  const ta=nA.I+nA.L+nA.M, td=nD.I+nD.L+nD.M;
+  return {nA,nD,turns:Math.min(t,maxT),win: td<=0&&ta>0?'A':(ta<=0&&td<=0?'draw':'D'),tl};
+}
+function fmt(n){return Math.round(n).toLocaleString('en-US');}
+const pct=n=>(n*100).toFixed(1)+'%';
+function run(){
+  const K=+document.getElementById('K').value||1, maxT=+document.getElementById('maxT').value||300,
+        runs=Math.max(1,Math.min(5000,+document.getElementById('runs').value||300)), city=document.getElementById('city').checked;
+  const A=buildArmy(CFG.A,'A'), D=buildArmy(CFG.D,'D');
+  const totA=TY.reduce((s,t)=>s+A.n[t],0), totD=TY.reduce((s,t)=>s+D.n[t],0);
+  if(!totA||!totD){document.getElementById('res').innerHTML='<span class="lose">ต้องมีทหารทั้งสองฝั่ง</span>';return;}
+  let wA=0,dr=0,turns=0; const remA={I:0,L:0,M:0}, remD={I:0,L:0,M:0}; const curve=[], tls=[];
+  for(let r=0;r<runs;r++){
+    const b=battle(A,D,K,maxT,true);
+    if(b.win==='A')wA++; else if(b.win==='draw')dr++;
+    turns+=b.turns; for(const t of TY){remA[t]+=b.nA[t];remD[t]+=b.nD[t];}
+    tls.push(b.tl);
+  }
+  // รอบที่จบก่อนถือค่าสุดท้ายไว้ เส้นเฉลี่ยจึงไม่กระโดด
+  const maxLen=Math.max(...tls.map(t=>t.length));
+  for(let i=0;i<maxLen;i++){let a=0,d=0; for(const tl of tls){const p=tl[Math.min(i,tl.length-1)]; a+=p[0]; d+=p[1];} curve.push([a,d,tls.length]);}
+  for(const t of TY){remA[t]/=runs;remD[t]/=runs;}
+  // ค่าที่ติดตลอด (ไม่รวมสกิลที่เป็นโอกาส/รายเทิร์น)
+  const mA=zero(),mD=zero(); applyFx(A,mA,mD,1,false,[]); applyFx(D,mD,mA,1,false,[]);
+  const eA=effStats(A,mA,mA), eD=effStats(D,mD,mD);
+  render(A,D,{wA,dr,runs,turns:turns/runs,remA,remD,curve,city,totA,totD,eA,eD,mA,mD,K});
+}
+function render(A,D,R){
+  const winA=R.wA/R.runs, aWins=winA>=.5;
+  const lossA=TY.reduce((s,t)=>s+A.n[t]-R.remA[t],0), lossD=TY.reduce((s,t)=>s+D.n[t]-R.remD[t],0);
+  let h=`<div class="kpis">
+   <div class="kpi"><span>โอกาสฝั่งโจมตีชนะ</span><b class="${aWins?'win':'lose'}">${pct(winA)}</b></div>
+   <div class="kpi"><span>ฝั่งป้องกันรับได้</span><b class="${aWins?'lose':'win'}">${pct((R.runs-R.wA-R.dr)/R.runs)}</b></div>
+   <div class="kpi"><span>เสมอ (ตายหมดทั้งคู่)</span><b>${pct(R.dr/R.runs)}</b></div>
+   <div class="kpi"><span>จำนวนเทิร์นเฉลี่ย</span><b>${R.turns.toFixed(1)}</b></div>
+   <div class="kpi"><span>ฝั่งโจมตีเสีย</span><b>${fmt(lossA)}</b><span>${pct(lossA/R.totA)}${R.city?` · ตายจริง ~${fmt(lossA*.35)}`:''}</span></div>
+   <div class="kpi"><span>ฝั่งป้องกันเสีย</span><b>${fmt(lossD)}</b><span>${pct(lossD/R.totD)}</span></div>
+  </div>
+  <div class="grid2"><div class="scroll"><table><tr><th>ฝั่ง</th><th>สาย</th><th>เริ่ม</th><th>เหลือ (เฉลี่ย)</th><th>เสีย</th></tr>`;
+  for(const [nm,a,rem,cl] of [['โจมตี',A,R.remA,'--atk'],['ป้องกัน',D,R.remD,'--def']])
+    for(const t of TY) h+=`<tr><td style="color:var(${cl})">${nm}</td><td>${TYN[t]}</td><td>${fmt(a.n[t])}</td><td>${fmt(rem[t])}</td><td>${fmt(a.n[t]-rem[t])} (${a.n[t]?pct((a.n[t]-rem[t])/a.n[t]):'—'})</td></tr>`;
+  h+=`</table></div><div><canvas id="cv" width="640" height="240"></canvas><div class="note">เส้นแดง = ทหารฝั่งโจมตีที่เหลือ · เส้นน้ำเงิน = ฝั่งป้องกัน (เฉลี่ยทุกรอบจำลอง)</div></div></div>`;
+  h+=`<details open><summary>ค่าที่ใช้คำนวณ (ไม่รวมสกิลที่เป็นโอกาส/รายเทิร์น)</summary><div class="grid2" style="margin-top:8px">`;
+  for(const [nm,a,e,m,cl] of [['ฝั่งโจมตี',A,R.eA,R.mA,'--atk'],['ฝั่งป้องกัน',D,R.eD,R.mD,'--def']]){
+    h+=`<div><b style="color:var(${cl})">${nm}</b><div class="scroll"><table><tr><th>สาย</th><th>โจมตี</th><th>สังหาร</th><th>ป้องกัน</th><th>พลังชีวิต</th><th>ดาเมจ×</th><th>รับดาเมจ×</th></tr>`;
+    for(const t of TY) h+=`<tr><td>${TYN[t]}</td><td>${e[t].A.toFixed(1)}</td><td>${e[t].L.toFixed(1)}</td><td>${e[t].D.toFixed(1)}</td><td>${e[t].H.toFixed(1)}</td><td>${e[t].out.toFixed(2)}</td><td>${e[t].inc.toFixed(2)}</td></tr>`;
+    h+=`</table></div><div class="chips" style="margin-top:6px">${a.used.map(u=>{const s=HMAP[u.h].x.find(x=>x.k===u.s);return `<span class="chip ${s.f.length?'':'off'}" title="${skillDesc(s,u.lv)}">${u.src==='ผู้ร่วม'?'👥 ':''}${u.h} · ${u.s} Lv${u.lv}</span>`}).join('')}</div></div>`;
+  }
+  h+=`</div></details><p class="note">K = ${R.K} · จำลอง ${R.runs} รอบ · ผลเป็นการประมาณจากสูตรที่ผู้เล่นแกะเอง ใช้เทียบการจัดทัพมากกว่าเป็นตัวเลขจริง</p>`;
+  document.getElementById('res').innerHTML=h;
+  drawCurve(R.curve,R.totA,R.totD);
+}
+function drawCurve(c,tA,tD){
+  const cv=document.getElementById('cv'); if(!cv)return; const x=cv.getContext('2d'), W=cv.width, H=cv.height, pad=28;
+  const cs=getComputedStyle(document.documentElement);
+  x.clearRect(0,0,W,H); const mx=Math.max(tA,tD), n=c.length;
+  x.strokeStyle=cs.getPropertyValue('--line'); x.beginPath(); x.moveTo(pad,8); x.lineTo(pad,H-pad); x.lineTo(W-8,H-pad); x.stroke();
+  x.fillStyle=cs.getPropertyValue('--mute'); x.font='11px sans-serif'; x.fillText(fmt(mx),2,14); x.fillText('เทิร์น '+n,W-70,H-10);
+  const line=(k,col,start)=>{x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(pad,H-pad-(start/mx)*(H-pad-8));
+    c.forEach((p,i)=>{const v=p[k]/p[2]; x.lineTo(pad+(i+1)/Math.max(1,n)*(W-pad-8),H-pad-(v/mx)*(H-pad-8));});x.stroke();};
+  line(0,cs.getPropertyValue('--atk'),tA); line(1,cs.getPropertyValue('--def'),tD);
+}
+document.getElementById('go').onclick=run;
+
+/* ===================== แนะนำการแก้ทาง ===================== */
+const clone=o=>JSON.parse(JSON.stringify(o));
+const tick=()=>new Promise(r=>setTimeout(r,0));
+function evalCfg(cA,cD,side,runs){
+  const K=+document.getElementById('K').value||1, maxT=+document.getElementById('maxT').value||300;
+  const A=buildArmy(cA,'A'), D=buildArmy(cD,'D'), tA=TY.reduce((s,t)=>s+A.n[t],0), tD=TY.reduce((s,t)=>s+D.n[t],0);
+  if(!tA||!tD) return {win:0,own:1,enemy:0,score:-1e9};
+  let wA=0,lA=0,lD=0;
+  for(let r=0;r<runs;r++){const b=battle(A,D,K,maxT,false); if(b.win==='A')wA++;
+    lA+=1-TY.reduce((s,t)=>s+b.nA[t],0)/tA; lD+=1-TY.reduce((s,t)=>s+b.nD[t],0)/tD;}
+  wA/=runs; lA/=runs; lD/=runs;
+  const o= side==='A'?{win:wA,own:lA,enemy:lD}:{win:1-wA,own:lD,enemy:lA};
+  o.score=o.win*1000+(o.enemy-o.own)*100; return o;
+}
+function setRatio(c,r){const T=TY.reduce((s,t)=>s+c.troops[t][0],0);
+  TY.forEach((t,i)=>c.troops[t][0]=Math.round(T*r[i]/100)); c.troops.I[0]+=T-TY.reduce((s,t)=>s+c.troops[t][0],0);}
+function pair(side,mine){return side==='A'?[mine,CFG.D]:[CFG.A,mine];}
+function ratioOf(c){const T=TY.reduce((s,t)=>s+c.troops[t][0],0)||1; return TY.map(t=>Math.round(c.troops[t][0]/T*100));}
+const rtxt=r=>`ราบ ${r[0]} · หอก ${r[1]} · ธนู ${r[2]}`;
+const dp=(a,b)=>{const d=(a-b)*100; return `<b class="${d>=0?'win':'lose'}">${d>=0?'+':''}${d.toFixed(1)}%</b>`;};
+let ADV=null;
+async function advise(){
+  const side=document.getElementById('advSide').value, out=document.getElementById('adv'), btn=document.getElementById('advGo');
+  const tryHero=document.getElementById('advHero').checked;
+  btn.disabled=true; const prog=m=>{out.innerHTML='⏳ '+m;};
+  try{
+  const mine0=clone(CFG[side]), ev=(c,n)=>{const [a,d]=pair(side,c); return evalCfg(a,d,side,n);};
+  prog('วัดผลตั้งต้น…'); await tick();
+  const base=ev(mine0,200);
+  // 1) สัดส่วนทหาร: กริด 10% แล้วละเอียด 5% รอบตัวที่ดี
+  prog('ลองสัดส่วนทหาร…'); await tick();
+  const seen=new Map(), test=(r,n)=>{const k=r.join(); if(seen.has(k)&&seen.get(k).n>=n) return seen.get(k); const c=clone(mine0); setRatio(c,r); const e=ev(c,n); e.r=r; e.n=n; seen.set(k,e); return e;};
+  for(let i=0;i<=100;i+=10){ for(let l=0;l<=100-i;l+=10) test([i,l,100-i-l],30); await tick(); }
+  let top=[...seen.values()].sort((a,b)=>b.score-a.score).slice(0,3);
+  for(const t of top){ for(const di of [-5,0,5]) for(const dl of [-5,0,5]){const r=[t.r[0]+di,t.r[1]+dl]; r.push(100-r[0]-r[1]); if(r.every(x=>x>=0)) test(r,30);} await tick(); }
+  top=[...seen.values()].sort((a,b)=>b.score-a.score).slice(0,5).map(t=>test(t.r,150)).sort((a,b)=>b.score-a.score);
+  const bestR=top[0];
+  // 2) บัฟไอเทม
+  prog('ลองบัฟไอเทม…'); await tick();
+  const bufs=[]; for(const s of ['atk','def','leth','hp']){const cur=(mine0.buf||{})[s]||0; if(cur>=20) continue;
+    const c=clone(mine0); c.buf=c.buf||{atk:0,def:0,leth:0,hp:0}; c.buf[s]=20; bufs.push({s,cur,e:ev(c,150)});}
+  bufs.sort((a,b)=>b.e.score-a.e.score);
+  // 3) ฮีโร่ (ตัวที่ถ้ามี จะช่วยมากสุด ต่อช่อง)
+  const heroSug=[];
+  const maxG=Math.max(0,...mine0.heroes.map(h=>HMAP[h[0]]?.g||0)); // ไม่แนะนำฮีโร่ Gen ที่ใหม่กว่าที่มีอยู่
+  if(tryHero){ for(let i=0;i<3;i++){ prog(`ลองฮีโร่ช่อง ${i+1}…`); await tick();
+    const curN=mine0.heroes[i][0], ty=HMAP[curN]?.t||TY[i], used=mine0.heroes.map(h=>h[0]);
+    let best=null; for(const h of HEROES){ if(h.t!==ty||h.r==='R'||used.includes(h.n)||(h.g||0)>maxG) continue;
+      const c=clone(mine0); c.heroes[i]=[h.n,[5,5,5],mine0.heroes[i][2]??10]; const e=ev(c,25); if(!best||e.score>best.e.score) best={n:h.n,e}; }
+    if(best){ const c=clone(mine0); c.heroes[i]=[best.n,[5,5,5],mine0.heroes[i][2]??10]; best.e=ev(c,150); best.slot=i; best.cur=curN; if(best.e.score>base.score) heroSug.push(best);} } }
+  // 4) ผู้ร่วมระดม/รักษาเมือง (เลือกทีละช่อง)
+  let joinBest=null;
+  if(MODE==='rally'){ const c=clone(mine0); const cand=HEROES.filter(h=>h.x[0]&&h.x[0].f.length);
+    for(let i=0;i<4;i++){ prog(`ลองผู้ร่วมคนที่ ${i+1}…`); await tick();
+      let best=null; for(const h of cand){ c.join[i]=[h.n,5]; const e=ev(c,20); if(!best||e.score>best.e.score) best={n:h.n,e}; }
+      c.join[i]=[best.n,5]; }
+    joinBest={join:c.join.map(j=>j[0]), e:ev(c,150)}; }
+  // 5) รวมทุกอย่าง
+  prog('รวมทุกข้อ…'); await tick();
+  const combo=clone(mine0); setRatio(combo,bestR.r);
+  if(bufs.length) combo.buf=Object.assign({atk:0,def:0,leth:0,hp:0},combo.buf||{}), ['atk','def','leth','hp'].forEach(s=>combo.buf[s]=20);
+  heroSug.forEach(h=>combo.heroes[h.slot]=[h.n,[5,5,5],combo.heroes[h.slot][2]??10]);
+  if(joinBest) combo.join=joinBest.join.map(n=>[n,5]);
+  const comboE=ev(combo,200);
+  // 6) ถ้ายังแพ้ ต้องมีทหารเพิ่มกี่เท่า
+  let need=null;
+  if(comboE.win<.5){ prog('หาจำนวนทหารที่ต้องมี…'); await tick();
+    const scaled=f=>{const c=clone(combo); TY.forEach(t=>c.troops[t][0]=Math.round(c.troops[t][0]*f)); return ev(c,40).win;};
+    let lo=1,hi=10; if(scaled(hi)<.5) need='>10';
+    else{ for(let k=0;k<9;k++){const m=(lo+hi)/2; if(scaled(m)>=.5) hi=m; else lo=m; if(k%2)await tick();} need=hi; } }
+  ADV={side,bestR,bufs,heroSug,joinBest,combo};
+  renderAdvice(side,mine0,base,top,bufs,heroSug,joinBest,comboE,need);
+  }catch(err){out.innerHTML='<span class="lose">เกิดข้อผิดพลาด: '+err.message+'</span>';}
+  btn.disabled=false;
+}
+function tips(side,mine){
+  const role=side, other=side==='A'?'D':'A', me=buildArmy(mine,role), en=buildArmy(CFG[other],other), T=[];
+  const tot=TY.reduce((s,t)=>s+en.n[t],0)||1, er=TY.map(t=>en.n[t]/tot);
+  // เป่ายิงฉุบ
+  if(er[0]>=.4) T.push(`ศัตรูมีทหารราบ ${Math.round(er[0]*100)}% อยู่แนวหน้า → <b>พลธนู</b>ได้ +10% เมื่อตีทหารราบ ทุกสายต้องตีทหารราบก่อนจนหมด`);
+  if(er[0]<.2) T.push(`ศัตรูมีทหารราบแค่ ${Math.round(er[0]*100)}% แนวหน้าบาง → ไม่นานทุกสายจะทะลุไปตี${er[1]>=er[2]?'ทหารหอก (ทหารราบของเราได้ +10% ใส่ทหารหอก)':'พลธนู (ทหารหอกของเราได้ +10% ใส่พลธนู)'}`);
+  if(er[2]>=.5&&mine.troops.L[1]>=7) T.push(`ศัตรูเป็นพลธนู ${Math.round(er[2]*100)}% → <b>ทหารหอก T7+</b> มีโอกาส 20% ข้ามแนวไปตีพลธนู และได้ +10% ใส่พลธนู`);
+  const mr=ratioOf(mine); if(mr[0]<15) T.push(`ทหารราบของเรามีแค่ ${mr[0]}% แนวหน้าจะแตกเร็ว แล้วทหารหอก/พลธนูที่ทนน้อยจะโดนตีแทน`);
+  // สมดุลค่าสถานะ
+  for(const t of TY){ if(!me.n[t]) continue; const p=me.pct.p[t];
+    if(Math.abs(p[0]-p[2])>=80){const lowS=p[0]<p[2]?'โจมตี':'สังหาร', hiS=p[0]<p[2]?'สังหาร':'โจมตี';
+      T.push(`${TYN[t]}: ${lowS} ${Math.round(Math.min(p[0],p[2]))}% ต่ำกว่า${hiS} ${Math.round(Math.max(p[0],p[2]))}% → สองค่านี้คูณกัน อัป<b>${lowS}</b>คุ้มกว่า (+10 แต้มได้ดาเมจ +${(10/(100+Math.min(p[0],p[2]))*100).toFixed(1)}% เทียบกับ +${(10/(100+Math.max(p[0],p[2]))*100).toFixed(1)}%)`);}
+    if(Math.abs(p[1]-p[3])>=80){const lowS=p[1]<p[3]?'ป้องกัน':'พลังชีวิต';
+      T.push(`${TYN[t]}: ${lowS}ต่ำกว่าอีกค่ามาก → ป้องกันกับพลังชีวิตคูณกัน อัป<b>${lowS}</b>ทำให้ทนขึ้นคุ้มกว่า`);}
+  }
+  return T;
+}
+function renderAdvice(side,mine0,base,top,bufs,heroSug,joinBest,comboE,need){
+  const who=side==='A'?'ฝั่งโจมตี':'ฝั่งป้องกัน', W=side==='A'?'ชนะ':'รับได้';
+  const cur=ratioOf(mine0);
+  let h=`<div class="kpis"><div class="kpi"><span>${who} ${W}ตอนนี้</span><b>${pct(base.win)}</b></div>
+    <div class="kpi"><span>ถ้าทำตามคำแนะนำทั้งหมด</span><b class="${comboE.win>=.5?'win':'lose'}">${pct(comboE.win)}</b><span>${dp(comboE.win,base.win)}</span></div>
+    ${need?`<div class="kpi"><span>ยังแพ้อยู่ ต้องมีทหาร</span><b class="lose">${need==='>10'?'มากกว่า 10 เท่า':'×'+need.toFixed(2)}</b><span>${need==='>10'?'ไม่ควรสู้':'≈ '+fmt(TY.reduce((s,t)=>s+mine0.troops[t][0],0)*need)+' นาย (หลังทำตามคำแนะนำ)'}</span></div>`:''}</div>`;
+  h+=`<h3>1. สัดส่วนทหาร (ยอดรวมเท่าเดิม) · ตอนนี้ ${rtxt(cur)}</h3><div class="scroll"><table><tr><th>สัดส่วน %</th><th>${W}</th><th>เราเสีย</th><th>ศัตรูเสีย</th><th></th></tr>`;
+  top.forEach((t,i)=>h+=`<tr><td>${i===0?'⭐ ':''}${rtxt(t.r)}</td><td>${pct(t.win)} ${dp(t.win,base.win)}</td><td>${pct(t.own)}</td><td>${pct(t.enemy)}</td><td><button class="btn ghost" data-ar="${t.r.join(',')}">ใช้</button></td></tr>`);
+  h+='</table></div>';
+  h+=`<h3>2. บัฟไอเทม +20%</h3>`;
+  h+= bufs.length? `<div class="scroll"><table><tr><th>เปิดบัฟ</th><th>${W}</th></tr>`+bufs.map(b=>`<tr><td>${STATN[b.s]} +20%${b.cur?' (ตอนนี้ +'+b.cur+'%)':''}</td><td>${pct(b.e.win)} ${dp(b.e.win,base.win)}</td></tr>`).join('')+'</table></div>' : '<div>เปิดบัฟครบ +20% แล้ว</div>';
+  if(document.getElementById('advHero').checked){
+    h+=`<h3>3. ฮีโร่ที่ช่วยได้มากสุด (ถ้ามีตัวนี้ · สกิล Lv5 · ไม่เกิน Gen ${Math.max(0,...mine0.heroes.map(x=>HMAP[x[0]]?.g||0))} ที่ใช้อยู่)</h3>`;
+    h+= heroSug.length? `<div class="scroll"><table><tr><th>ช่อง</th><th>เปลี่ยนจาก → เป็น</th><th>${W}</th><th>เราเสีย</th><th>ศัตรูเสีย</th><th></th></tr>`+heroSug.map(s=>`<tr><td>${s.slot+1}</td><td>${s.cur||'—'} → <b>${s.n}</b></td><td>${pct(s.e.win)} ${dp(s.e.win,base.win)}</td><td>${pct(s.e.own)} (เดิม ${pct(base.own)})</td><td>${pct(s.e.enemy)} (เดิม ${pct(base.enemy)})</td><td><button class="btn ghost" data-ah="${s.slot},${s.n}">ใช้</button></td></tr>`).join('')+'</table></div>' : '<div>ฮีโร่ชุดนี้ดีที่สุดแล้วในสายเดียวกัน</div>';
+  }
+  if(joinBest){ h+=`<h3>4. ผู้ร่วม 4 คนที่แนะนำ (สกิลแรกของฮีโร่ช่องแรก Lv5)</h3>
+    <div>${joinBest.join.map((n,i)=>`${i+1}. <b>${n}</b> (${HMAP[n].x[0].k})`).join(' · ')} → ${W} ${pct(joinBest.e.win)} ${dp(joinBest.e.win,base.win)} <button class="btn ghost" data-aj="1">ใช้</button></div>`; }
+  const T=tips(side,mine0);
+  if(T.length) h+=`<h3>💡 ข้อสังเกต</h3><ul style="margin:0;padding-left:20px;line-height:1.7">${T.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  h+=`<p class="note">ผลแต่ละข้อวัดแยกกันจากการตั้งค่าตอนนี้ ข้อ “ถ้าทำตามทั้งหมด” คือรวมสัดส่วน ⭐ + บัฟครบ + ฮีโร่ + ผู้ร่วม · ตัวเลขสุ่มจำลองจึงคลาดได้ราว ±5%</p>
+  <button class="btn" data-aall="1">ใช้คำแนะนำทั้งหมด</button>`;
+  const out=document.getElementById('adv'); out.innerHTML=h;
+  out.onclick=e=>{const d=e.target.dataset, c=CFG[side];
+    if(d.ar) setRatio(c,d.ar.split(',').map(Number));
+    else if(d.ah){const [i,n]=d.ah.split(','); c.heroes[+i]=[n,[5,5,5],c.heroes[+i][2]??10];}
+    else if(d.aj&&ADV.joinBest) c.join=ADV.joinBest.join.map(n=>[n,5]);
+    else if(d.aall) CFG[side]=clone(ADV.combo);
+    else return;
+    saveCfg(); rerender(); run(); e.target.textContent='✓ ใช้แล้ว'; };
+}
+document.getElementById('advGo').onclick=advise;
+</script>
+</body>
+</html>
