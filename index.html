@@ -47,6 +47,23 @@ input[type=number],input[type=text],select{background:var(--panel2);color:var(--
 .quick .presets{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--mute)}
 .quick .presets .btn{padding:2px 8px;font-size:12px}
 .quick .note{flex-basis:100%}
+.sides>*,.grid2>*,.res,.side{min-width:0}
+.hero select.h{min-width:0;max-width:100%}
+@media(max-width:600px){
+  .wrap{padding:12px max(12px,env(safe-area-inset-right,0px)) 12px max(12px,env(safe-area-inset-left,0px))}
+  header{padding:12px}
+  h1{font-size:18px} h1 small{display:block;margin-top:2px}
+  .side{padding:10px}
+  input,select{font-size:16px} /* กันมือถือซูมเองตอนแตะช่องกรอก */
+  input[type=number]{width:72px} input.pct{width:64px}
+  .bar{gap:8px 12px} .bar .btn{flex:1}
+  .kpi b{font-size:19px}
+  canvas{height:200px}
+  th,td{padding:4px 3px}
+  body #fab{display:block}
+  body{padding-bottom:76px}
+}
+#fab{display:none;position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:20;padding:13px;font-size:16px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .meta{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);font-size:13px;line-height:1.55}
 input[type=number]{width:84px}
 input.pct{width:70px}
@@ -625,6 +642,8 @@ function drawCurve(c,tA,tD){
   line(0,cs.getPropertyValue('--atk'),tA); line(1,cs.getPropertyValue('--def'),tD);
 }
 document.getElementById('go').onclick=run;
+document.body.insertAdjacentHTML('beforeend','<button class="btn" id="fab">▶ จำลองการรบ</button>');
+document.getElementById('fab').onclick=()=>{run(); document.getElementById('res').scrollIntoView({behavior:'smooth'});};
 
 /* ===================== แนะนำการแก้ทาง ===================== */
 const clone=o=>JSON.parse(JSON.stringify(o));
