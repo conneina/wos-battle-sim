@@ -91,6 +91,7 @@ details{margin-top:10px} summary{cursor:pointer;color:var(--accent)}
 .pets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 12px;margin-bottom:4px}
 .pets label{display:flex;flex-direction:column;gap:3px;font-size:13px;line-height:1.3}
 .pets .note{font-size:11px}
+.bonus{margin:4px 0 8px;padding:8px 10px;border:1px dashed var(--line);border-radius:8px} .bonus summary{font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:900px){.grid2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -436,6 +437,16 @@ function renderSide(id,cfg){
   <h3>ค่าสถานะ % ${cfg.incl?'— ยอดรวมจากรายงานการรบ':'— โบนัสอื่นที่ไม่ใช่ฮีโร่ (เทค ชาร์ม เกียร์ผู้นำ ฯลฯ)'} ${MODE!=='solo'?(isA?'· ของผู้นำ':'· ของคนที่บัฟสูงสุด'):''}</h3>
   <div class="note" style="margin-bottom:6px">โบนัสทหารเป็น % ที่ท้ายรายงานการรบ (รายงานเดียวกันมีของทั้งเราและศัตรู) · <b>โจมตี</b> = ตีแรงขึ้น · <b>ป้องกัน</b> = โดนตีเบาลง · <b>สังหาร</b> = ดาเมจทะลุเกราะ (ความแรง) · <b>พลังชีวิต</b> = เลือด<br>
   ${cfg.incl?'กรอกตัวเลขจากรายงานตรงๆ ได้เลย':'ถ้าจะกรอกตัวเลขจากรายงานตรงๆ ให้ติ๊กช่องข้างล่าง เพราะในรายงานรวมค่าฮีโร่กับอุปกรณ์เสริมไว้แล้ว'}</div>
+  <details class="bonus" ${cfg.bonus?'':'open'}><summary>📋 กรอกจากหน้า “รายละเอียดโบนัส” ในเกม (ตรงกับบัญชีเรา)</summary>
+  <div class="note" style="margin:6px 0">ในเกม: กดรูปผู้นำ → <b>รายละเอียดโบนัส</b> → หมวด <b>ทหาร</b> · ลอกตัวเลขลงช่องที่ชื่อตรงกัน ช่องที่ในเกมไม่มีเว้นว่างได้ · กด “ใช้ค่านี้” แล้วตัวจำลองจะรวม <b>ทั้งทีม + รายสาย</b> ลงตาราง % ข้างล่างให้ · หน้านี้ยังไม่รวมฮีโร่ อุปกรณ์เสริม และสกิลฮีโร่ ตัวจำลองบวกให้เองตามฮีโร่ที่เลือก</div>
+  <div class="scroll"><table><tr><th></th><th>โจมตี%</th><th>ป้องกัน%</th><th>ความแรง (สังหาร)%</th><th>พลังชีวิต%</th></tr>
+  ${[['team','ทีม (ทุกสาย)'],['I','พลทหารราบ'],['L','พลทหารหอก'],['M','พลธนู']].map(([k,nm])=>`<tr><td>${nm}</td>${[0,1,2,3].map(i=>`<td><input class="pct" type="number" step="any" data-bn="${k}" data-i="${i}" value="${cfg.bonus&&cfg.bonus[k]&&cfg.bonus[k][i]?cfg.bonus[k][i]:''}" placeholder="0"></td>`).join('')}</tr>`).join('')}
+  </table></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:6px 0 10px">
+    <label>ความจุการส่งออกทหาร <input type="text" inputmode="decimal" data-bn="cap" value="${cfg.bonus&&cfg.bonus.cap?short(cfg.bonus.cap):''}" placeholder="เช่น 163,650" style="width:110px"></label>
+    <button class="btn" data-bnok="1" style="padding:5px 16px">ใช้ค่านี้</button>
+    <span class="note">ใส่ความจุแล้วจะปรับยอดทหารรวมให้เท่ากับมาร์ชเดี่ยว (สัดส่วนเดิม) · ระดมให้ใส่ยอดรวมของทั้งกองเอง</span>
+  </div></details>
   <label class="note" style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input type="checkbox" data-k="incl" ${cfg.incl?'checked':''}> ค่าที่กรอกเป็นยอดรวมจากรายงานการรบแล้ว (ไม่บวกค่าฮีโร่/อุปกรณ์เสริมซ้ำ)</label>
   <div class="scroll"><table><tr><th>สาย</th><th>โจมตี%</th><th>ป้องกัน%</th><th>สังหาร%</th><th>พลังชีวิต%</th></tr>`;
   for(const t of TY){h+=`<tr><td>${TYN[t]}</td>`+[0,1,2,3].map(i=>`<td><input class="pct" type="number" data-k="rep" data-t="${t}" data-i="${i}" value="${cfg.rep[t][i]}" step="1"></td>`).join('')+'</tr>';}
@@ -494,6 +505,12 @@ function bindSide(id){
   el.onclick=e=>{const d=e.target.dataset;
     if(d.preset){const p=d.preset.split(','); TY.forEach((t,i)=>el.querySelector(`[data-q="${t}"]`).value=p[i]); quickApply();}
     if(d.q==='ok') quickApply();
+    if(d.bnok){const c=SC(id), b={team:[0,0,0,0],I:[0,0,0,0],L:[0,0,0,0],M:[0,0,0,0],cap:0};
+      el.querySelectorAll('[data-bn]').forEach(x=>{const k=x.dataset.bn; if(k==='cap') b.cap=parseNum(x.value); else b[k][+x.dataset.i]=parseFloat(String(x.value).replace(/[,%\s]/g,''))||0;});
+      for(const t of TY) c.rep[t]=[0,1,2,3].map(i=>+(b.team[i]+b[t][i]).toFixed(2));
+      c.incl=false; c.bonus=b;
+      if(b.cap){const T=TY.reduce((s,t)=>s+c.troops[t][0],0)||1, r=TY.map(t=>c.troops[t][0]/T); TY.forEach((t,i)=>c.troops[t][0]=Math.round(b.cap*r[i])); c.troops.I[0]+=b.cap-TY.reduce((s,t)=>s+c.troops[t][0],0);}
+      saveCfg(); rerender();}
     if(d.petall){const c=SC(id); c.pet={}; if(d.petall==='max') PETS.forEach(x=>c.pet[x.k]=petMax(x.k)); saveCfg(); rerender();}
     if(d.mj){SC(id).join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();}
     if(d.mh){const c=SC(id); d.mh.split(',').forEach((n,i)=>c.heroes[i]=[n,[5,5,5],c.heroes[i]?.[2]??10]); saveCfg(); rerender();} };
