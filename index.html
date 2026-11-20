@@ -47,6 +47,7 @@ input[type=number],input[type=text],select{background:var(--panel2);color:var(--
 .quick .presets{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--mute)}
 .quick .presets .btn{padding:2px 8px;font-size:12px}
 .quick .note{flex-basis:100%}
+.meta{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);font-size:13px;line-height:1.55}
 input[type=number]{width:84px}
 input.pct{width:70px}
 .hero{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
@@ -317,6 +318,44 @@ const lvOpts=v=>[1,2,3,4,5].map(i=>`<option ${i===v?'selected':''}>${i}</option>
 function tierOpts(v){return [1,2,3,4,5,6,7,8,9,10,11,12].map(i=>`<option value="${i}" ${i===v?'selected':''}>${i===12?'T12 Exalted':'T'+i}</option>`).join('')}
 function fcOpts(v){return [0,1,2,3,4,5,6,7,8,9,10].map(i=>`<option value="${i}" ${i===v?'selected':''}>${i?'FC'+i:'—'}</option>`).join('')}
 
+/* ===================== เมต้าสัดส่วนทหาร =====================
+ ที่มา: wosformations.com (อัปเดต 17 พ.ย. 2026) · showgamer.com (12 พ.ย. 2026) · topuplive.com (มิ.ย. 2026)
+ ผู้ร่วม: wosformations joiners-guide — บัฟชนิดเดียวกันบวกกัน ต่างชนิดคูณกัน จึงเลือกผู้ร่วมคนละชนิด */
+const JOIN_ATK=['Jessie','Seo-yoon','Gwen','Alonso'];   // ดาเมจ + โจมตี + ศัตรูรับดาเมจ + สังหาร
+const JOIN_DEF=['Sergey','Patrick','Logan','Philly'];   // ลดดาเมจที่รับ + เลือด + ศัตรูโจมตีลด + โจมตี/ป้องกัน
+const META=[
+ {name:'PvP ทั่วไป',r:[50,20,30],pvp:1,when:'มาร์ชทั่วไป ตีเดี่ยว และระดมพื้นฐาน · สมดุลและนิ่งที่สุด ใช้ได้เกือบทุกสถานการณ์',heroes:'ฮีโร่หลักครบ 3 สาย (ราบ / หอก / ธนู) Gen สูงสุดที่มี',jA:JOIN_ATK,jD:JOIN_DEF,src:'showgamer · topuplive'},
+ {name:'ระดมโจมตี',r:[40,10,50],pvp:1,when:'ระดมตีเมืองหรือกองทหารทั่วไป · เพิ่มพลธนูเพื่อดาเมจ ยังมีทหารราบกันหน้า',heroes:'ฮีโร่ธนูตัวแรงสุดช่อง 3 · ผู้ร่วมบัฟคนละชนิด',jA:JOIN_ATK,src:'topuplive'},
+ {name:'ระดมดาเมจสูง',r:[30,10,60],pvp:1,when:'ศัตรูตั้งกำแพงทหารราบ · พลธนูได้ +10% ใส่ทหารราบ และยิงจากหลังแนวราบของเรา',heroes:'ฮีโร่ธนูกับฮีโร่บัฟดาเมจ',jA:JOIN_ATK,src:'topuplive · wosformations'},
+ {name:'ราบ+หอก',r:[60,40,0],pvp:1,when:'ระดมแบบคลาสสิก · ชนะกำแพงพลธนู (หอก +10% ใส่ธนู) แต่แพ้กำแพงทหารราบ',heroes:'ทีม Greg (Land of Heroes ทีม 1) · อย่าเพิ่งใช้ถ้ายังไม่มี Greg',jA:JOIN_ATK,src:'wosformations · showgamer'},
+ {name:'สมดุลเน้นธนู',r:[45,10,45],pvp:1,when:'ค่าเริ่มต้นสากล · Labyrinth และ Alliance Championship',heroes:'ฮีโร่ครบ 3 สาย',jA:JOIN_ATK,jD:JOIN_DEF,src:'showgamer'},
+ {name:'ทีม Mia',r:[54,3,43],pvp:1,when:'ทีมเฉพาะทางที่ใช้สกิลสุ่มของ Mia (Land of Heroes ทีม 2) · แบบใกล้กัน 48/4/48',heroes:'Mia ช่องหอก · ไม่มี Mia ใช้ Molly แบบ 50/0/50',jA:JOIN_ATK,src:'showgamer'},
+ {name:'รักษาเมือง',r:[60,20,20],pvp:1,when:'ฝั่งป้องกัน / garrison · ทหารราบหนาไว้รับดาเมจแถวหน้า',heroes:'ฮีโร่ราบสายทน (ลดดาเมจ / เลือด / ป้องกัน) · ตั้งฮีโร่ป้องกันแยกจากทีมบุก',jD:JOIN_DEF,src:'topuplive · wosformations'},
+ {name:'ป้องกันหนัก',r:[70,30,0],pvp:1,when:'ตั้งรับอย่างเดียว เน้นทนให้นานที่สุด · ศัตรูเป็นพลธนูเยอะจะเจ็บ',heroes:'ฮีโร่ราบสายทน',jD:JOIN_DEF,src:'topuplive'},
+ {name:'Bear Hunt',r:[10,10,80],pvp:0,when:'อีเวนต์ล่าหมี (ผู้นำระดม) · หมีไม่ตีกลับ นับแค่ดาเมจ · Gen ต้นใช้ 20/30/50 · ไม่ใช่ PvP',heroes:'ฮีโร่ 3 สาย ใช้ครบ 9 สกิล · Renee ต้องมีหอก ~20% · Reina/Sonya ~30%',jA:['Jessie','Seo-yoon','Gwen','Jasser'],src:'wosformations bear-trap'},
+ {name:'Crazy Joe',r:[90,10,0],pvp:0,when:'อีเวนต์ Crazy Joe ป้องกันเมือง (คลื่นปกติ) · ไม่ใช่ PvP',heroes:'ส่งเสริมกำลังด้วย Jessie / Jasser / Jeronimo ช่องแรก · เก็บฮีโร่แรงไว้ป้องกันบ้าน',jD:['Jessie','Jasser','Jeronimo','Jessie'],src:'wosformations crazy-joe'},
+];
+function metaBox(id,cfg,rr){
+  if(!rr.some(x=>x)) return '';
+  const near=META.map(m=>({m,d:Math.abs(m.r[0]-rr[0])+Math.abs(m.r[1]-rr[1])+Math.abs(m.r[2]-rr[2])})).sort((a,b)=>a.d-b.d)[0], m=near.m;
+  const match=near.d<=10;
+  const role=id==='A'?'jA':'jD', join=m[role]||(id==='A'?JOIN_ATK:JOIN_DEF);
+  // แก้ทางตามสัดส่วนศัตรู (wosformations)
+  const o=CFG[id==='A'?'D':'A'], ot=TY.reduce((s,t)=>s+o.troops[t][0],0)||1, er=TY.map(t=>Math.round(o.troops[t][0]/ot*100));
+  let ctr='';
+  if(er[2]>=50) ctr=`ศัตรูเป็นพลธนู ${er[2]}% → เพิ่ม<b>ทหารหอก</b> (+10% ใส่ธนู · T7+ ข้ามแนวไปตีธนู 20%) แต่คงทหารราบไว้กันหน้า`;
+  else if(er[0]>=55) ctr=`ศัตรูตั้งกำแพงทหารราบ ${er[0]}% → เพิ่ม<b>พลธนู</b>หลังแนวราบของเรา (+10% ใส่ราบ) · ราบ+หอกล้วนจะเสียเปรียบ`;
+  else if(er[1]>=35) ctr=`ศัตรูมีทหารหอก ${er[1]}% → ให้<b>ทหารราบ</b>นำหน้า (+10% ใส่หอก) และพลธนูอยู่หลัง`;
+  else ctr=`ศัตรูสมดุล (${er.join('/')}) → ไม่มีสัดส่วนแก้ทางตายตัว ลองปุ่ม “หาวิธีแก้ทาง” ด้านล่าง`;
+  return `<div class="meta">
+    <div><b>📌 ${match?'ตรงกับเมต้า':'ใกล้สุดคือเมต้า'}: ${m.name} ${m.r.join('/')}</b> ${match?'':`<span class="note">(ต่างจากของคุณ ${near.d}%)</span>`} ${m.pvp?'':'<span class="tag">อีเวนต์ ไม่ใช่ PvP</span>'}</div>
+    <div>${m.when}</div>
+    <div><b>ฮีโร่:</b> ${m.heroes}</div>
+    ${MODE==='rally'?`<div><b>ผู้ร่วม${id==='A'?'ระดม':'รักษาเมือง'}แนะนำ:</b> ${join.join(' · ')} (สกิลแรก Lv5) <button class="btn ghost" data-mj="${join.join(',')}" style="padding:1px 8px;font-size:12px">ใช้ผู้ร่วมชุดนี้</button></div>`:''}
+    <div><b>แก้ทางศัตรู:</b> ${ctr}</div>
+    <div class="note">ที่มา: ${m.src} · เมต้าเป็นแนวทางจากชุมชนผู้เล่น ไม่ใช่สูตรตายตัว</div>
+  </div>`;
+}
 function renderSide(id,cfg){
   const el=document.getElementById(id==='A'?'sideA':'sideD');
   const isA=id==='A';
@@ -331,7 +370,7 @@ function renderSide(id,cfg){
     <label>หอก <input type="number" data-q="L" value="${rr[1]}" min="0" style="width:56px"></label>
     <label>ธนู <input type="number" data-q="M" value="${rr[2]}" min="0" style="width:56px"></label>
     <button class="btn" data-q="ok" style="padding:5px 16px">ตกลง</button>
-    <div class="presets">ด่วน: ${['10,10,80','20,20,60','40,20,40','50,20,30','60,20,20','34,33,33'].map(p=>`<button class="btn ghost" data-preset="${p}">${p.replace(/,/g,'/')}</button>`).join('')}</div>
+    <div class="presets">เมต้า: ${META.map(m=>`<button class="btn ghost" data-preset="${m.r.join(',')}" title="${m.when}">${m.name} ${m.r.join('/')}</button>`).join('')}</div>
     <div class="note">พิมพ์ยอดรวม (100k, 1.5m ได้) ใส่สัดส่วน 3 ช่อง แล้วกด “ตกลง” หรือ Enter · สัดส่วนรวมไม่ถึง 100 ก็ได้ ระบบเทียบให้เอง</div>
   </div>
   <div class="scroll"><table><tr><th>สาย</th><th>จำนวน</th><th>เทียร์</th><th>FC</th></tr>`;
@@ -340,7 +379,7 @@ function renderSide(id,cfg){
     <td><select data-k="tier" data-t="${t}">${tierOpts(ti)}</select></td>
     <td><select data-k="fc" data-t="${t}" ${ti===10||ti===11?'':'disabled'}>${fcOpts(fc)}</select></td></tr>`;}
   h+=`<tr><td><b>รวม</b></td><td colspan="3"><b>${fmt(tot)}</b> นาย · ราบ ${rr[0]}% · หอก ${rr[1]}% · ธนู ${rr[2]}%</td></tr>`;
-  h+=`</table></div>
+  h+=`</table></div>${metaBox(id,cfg,rr)}
   <h3>ค่าสถานะ % ${cfg.incl?'— ยอดรวมจากรายงานการรบ':'— โบนัสอื่นที่ไม่ใช่ฮีโร่ (เทค ชาร์ม เกียร์ผู้นำ ฯลฯ)'} ${MODE==='rally'?(isA?'· ของผู้นำ':'· ของคนที่บัฟสูงสุด'):''}</h3>
   <div class="note" style="margin-bottom:6px">โบนัสทหารเป็น % ที่ท้ายรายงานการรบ (รายงานเดียวกันมีของทั้งเราและศัตรู) · <b>โจมตี</b> = ตีแรงขึ้น · <b>ป้องกัน</b> = โดนตีเบาลง · <b>สังหาร</b> = ดาเมจทะลุเกราะ (ความแรง) · <b>พลังชีวิต</b> = เลือด<br>
   ${cfg.incl?'กรอกตัวเลขจากรายงานตรงๆ ได้เลย':'ถ้าจะกรอกตัวเลขจากรายงานตรงๆ ให้ติ๊กช่องข้างล่าง เพราะในรายงานรวมค่าฮีโร่กับอุปกรณ์เสริมไว้แล้ว'}</div>
@@ -397,7 +436,8 @@ function bindSide(id){
     saveCfg(); rerender(); };
   el.onclick=e=>{const d=e.target.dataset;
     if(d.preset){const p=d.preset.split(','); TY.forEach((t,i)=>el.querySelector(`[data-q="${t}"]`).value=p[i]); quickApply();}
-    if(d.q==='ok') quickApply(); };
+    if(d.q==='ok') quickApply();
+    if(d.mj){CFG[id].join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();} };
   el.onkeydown=e=>{ if(e.key==='Enter'&&e.target.dataset.q){ e.preventDefault(); quickApply(); } };
   el.onchange=e=>{const c=CFG[id], d=e.target.dataset, v=e.target.value;
     if(d.k==='cnt'){c.troops[d.t][0]=parseNum(v); rerender();}
