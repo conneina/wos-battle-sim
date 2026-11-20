@@ -88,6 +88,9 @@ canvas{width:100%;height:240px;background:var(--panel2);border-radius:8px}
 details{margin-top:10px} summary{cursor:pointer;color:var(--accent)}
 .joiners .hero{grid-template-columns:auto 1fr auto}
 .hide{display:none!important}
+.pets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 12px;margin-bottom:4px}
+.pets label{display:flex;flex-direction:column;gap:3px;font-size:13px;line-height:1.3}
+.pets .note{font-size:11px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:900px){.grid2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -310,8 +313,23 @@ function heroStat(n){const h=HMAP[n]; if(!h) return null;
 const gearSkillLv=l=>Math.ceil(l/2);              // อุปกรณ์ Lv1-2 = สกิล 1 … Lv9-10 = สกิล 5
 const gearSpecial=l=>l>0?2.5+2.5*gearSkillLv(l):0; // 5 / 7.5 / 10 / 12.5 / 15 %
 const CTXN={R:'ตอนนำระดม',D:'ตอนป้องกัน',T:'ทุกครั้ง'};
-const SELF=['atk','def','leth','hp','dmg','taken'], ENEMY=['eatk','edef','eleth','edmg','vuln'];
-const STATN={atk:'โจมตี',def:'ป้องกัน',leth:'สังหาร',hp:'พลังชีวิต',dmg:'ดาเมจ',taken:'ลดดาเมจที่รับ',eatk:'ศัตรูโจมตี−',edef:'ศัตรูป้องกัน−',eleth:'ศัตรูสังหาร−',edmg:'ศัตรูดาเมจ−',vuln:'ศัตรูรับดาเมจ+'};
+const SELF=['atk','def','leth','hp','dmg','taken'], ENEMY=['eatk','edef','eleth','edmg','vuln','ehp'];
+/* สัตว์เลี้ยง: สกิลกดใช้ อยู่ 2 ชม. คูลดาวน์ 20 ชม. (wos.h5joy-games.com/pets · heaven-guardian พ.ย. 2026)
+   ค่าตามขั้น Lv10→100: 2.5/3/3.5/4/5/6/7/8/9/10% · Snow Leopard/Titan Roc 1.5→5% · Frostscale Chameleon ไกด์บอกแค่สูงสุด 10%
+   บัฟฝั่งเรา (โจมตี/ป้องกัน/สังหาร/พลังชีวิต) บวกเข้า % เหมือนบัฟไอเทม · ดีบัฟศัตรูคิดเป็นสกิลตลอดการรบ */
+const PET_SSR=[2.5,3,3.5,4,5,6,7,8,9,10], PET_SR=[1.5,2,2.5,3,3.5,4,4.5,5];
+const PETS=[
+ {k:'lion',n:'Cave Lion',th:'สิงโตถ้ำ',s:'atk',v:PET_SSR},
+ {k:'mam',n:'Mammoth',th:'แมมมอธ',s:'def',v:PET_SSR},
+ {k:'tiger',n:'Saber-tooth Tiger',th:'เสือเขี้ยวดาบ',s:'leth',v:PET_SSR},
+ {k:'gor',n:'Frost Gorilla',th:'กอริลลาน้ำแข็ง',s:'hp',v:PET_SSR},
+ {k:'cham',n:'Frostscale Chameleon',th:'กิ้งก่าเกล็ดน้ำแข็ง',s:'edef',v:PET_SSR},
+ {k:'leo',n:'Snow Leopard',th:'เสือดาวหิมะ',s:'eleth',v:PET_SR},
+ {k:'roc',n:'Titan Roc',th:'นกยักษ์ร็อก',s:'ehp',v:PET_SR},
+];
+const PMAP=Object.fromEntries(PETS.map(x=>[x.k,x]));
+const petMax=k=>PMAP[k].v[PMAP[k].v.length-1];
+const STATN={atk:'โจมตี',def:'ป้องกัน',leth:'สังหาร',hp:'พลังชีวิต',dmg:'ดาเมจ',taken:'ลดดาเมจที่รับ',eatk:'ศัตรูโจมตี−',edef:'ศัตรูป้องกัน−',eleth:'ศัตรูสังหาร−',edmg:'ศัตรูดาเมจ−',vuln:'ศัตรูรับดาเมจ+',ehp:'ศัตรูพลังชีวิต−'};
 
 /* ===================== UI ===================== */
 let MODE='solo';
@@ -426,6 +444,9 @@ function renderSide(id,cfg){
   <h3>บัฟไอเทม (+10% / +20%) · ใช้กับทหารทุกสาย</h3>
   <div style="display:flex;flex-wrap:wrap;gap:8px 14px">${['atk','def','leth','hp'].map(s=>`<label>${STATN[s]} <select data-k="buf" data-s="${s}">${[0,10,20].map(v=>`<option value="${v}" ${v===(bf[s]||0)?'selected':''}>${v?'+'+v+'%':'ไม่มี'}</option>`).join('')}</select></label>`).join('')}</div>
   <div class="note">บวกเข้ากับค่าสถานะ % ข้างบน · ถ้าตัวเลขที่ลอกจากรายงานมีบัฟนี้อยู่แล้ว ให้ตั้งเป็น "ไม่มี" จะได้ไม่นับซ้ำ</div>
+  <h3>🐾 สกิลสัตว์เลี้ยง (กดใช้ อยู่ 2 ชม.) <button class="btn ghost" data-petall="max" style="padding:1px 8px;font-size:12px">เปิดสูงสุดทุกตัว</button> <button class="btn ghost" data-petall="0" style="padding:1px 8px;font-size:12px">ปิดหมด</button></h3>
+  <div class="pets">${PETS.map(x=>{const cur=(cfg.pet||{})[x.k]||0; return `<label title="${x.n}"><span>${x.th} <span class="note">${x.n}</span><br><b>${STATN[x.s]}</b></span><select data-k="pet" data-p="${x.k}"><option value="0">ไม่ใช้</option>${x.v.map(v=>`<option value="${v}" ${v===cur?'selected':''}>${x.s.startsWith('e')?'−':'+'}${v}%</option>`).join('')}</select></label>`;}).join('')}</div>
+  <div class="note">ค่าตามเลเวลสัตว์เลี้ยง (Lv10 = 2.5% … Lv100 = 10%) · บัฟฝั่งเราบวกเข้า % เหมือนบัฟไอเทม ถ้ากรอกจากรายงานที่เปิดสกิลอยู่แล้วให้ตั้ง "ไม่ใช้" · โบนัสถาวรของสัตว์เลี้ยง (โจมตี/ป้องกันสูงสุด +33.5%) อยู่ใน % จากรายงานแล้ว ไม่ต้องใส่ · ${MODE==='bear'?'ตีหมีใช้แค่ โจมตี สังหาร ลดป้องกันศัตรู ลดพลังชีวิตศัตรู':'Iron Rhino (ความจุระดม) ไม่มีช่อง ให้บวกเข้าจำนวนทหารแทน'}</div>
   <h3>ฮีโร่ 3 ตัว ${MODE!=='solo'?(isA?'(ผู้นำ · ใช้ครบ 9 สกิล)':'(เจ้าของเมือง · ใช้ครบ 9 สกิล)'):''}</h3>`;
   cfg.heroes.forEach(([n,lv,gl],i)=>{ const hero=HMAP[n], hs=heroStat(n); gl=gl??10;
     let stat='';
@@ -473,6 +494,7 @@ function bindSide(id){
   el.onclick=e=>{const d=e.target.dataset;
     if(d.preset){const p=d.preset.split(','); TY.forEach((t,i)=>el.querySelector(`[data-q="${t}"]`).value=p[i]); quickApply();}
     if(d.q==='ok') quickApply();
+    if(d.petall){const c=SC(id); c.pet={}; if(d.petall==='max') PETS.forEach(x=>c.pet[x.k]=petMax(x.k)); saveCfg(); rerender();}
     if(d.mj){SC(id).join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();}
     if(d.mh){const c=SC(id); d.mh.split(',').forEach((n,i)=>c.heroes[i]=[n,[5,5,5],c.heroes[i]?.[2]??10]); saveCfg(); rerender();} };
   el.onkeydown=e=>{ if(e.key==='Enter'&&e.target.dataset.q){ e.preventDefault(); quickApply(); } };
@@ -493,6 +515,7 @@ function bindSide(id){
     if(d.k==='gear'){c.heroes[+d.i][2]=+v; rerender();}
     if(d.k==='incl'){c.incl=e.target.checked; rerender();}
     if(d.k==='buf'){c.buf=c.buf||{atk:0,def:0,leth:0,hp:0}; c.buf[d.s]=+v;}
+    if(d.k==='pet'){c.pet=c.pet||{}; c.pet[d.p]=+v;}
     if(d.k==='hlv') c.heroes[+d.i][1][+d.j]=+v;
     if(d.k==='join'){c.join[+d.i][0]=v; rerender();}
     if(d.k==='jlv'){c.join[+d.i][1]=+v; rerender();}
@@ -547,6 +570,7 @@ function gearCtxOn(ctx,role){return ctx==='T'||(ctx==='D'&&role==='D')||(ctx==='
 function statPct(c,role){
   const p={}; for(const t of TY) p[t]=[...c.rep[t]]; // [atk,def,leth,hp] หน่วย %
   const bf=c.buf||{}; for(const t of TY) ['atk','def','leth','hp'].forEach((s,i)=>p[t][i]+=Math.min(20,bf[s]||0)); // บัฟไอเทม สูงสุด +20%
+  const pt=c.pet||{}; for(const x of PETS) if(pt[x.k]&&['atk','def','leth','hp'].includes(x.s)){const i=['atk','def','leth','hp'].indexOf(x.s); for(const t of TY) p[t][i]+=Math.min(petMax(x.k),pt[x.k]);} // สกิลสัตว์เลี้ยง
   const sp={atk:0,def:0,leth:0,hp:0}, info=[];
   if(!c.incl){
     c.heroes.forEach(([n,,gl])=>{const h=HMAP[n], hs=heroStat(n); if(!hs)return; gl=gl??10;
@@ -567,6 +591,7 @@ function buildArmy(c,role){
   const used=[];
   c.heroes.forEach(([n,lv])=>{const h=HMAP[n]; if(!h)return; h.x.forEach((s,j)=>{used.push({h:n,s:s.k,lv:lv[j]||5,src:'ฮีโร่'}); s.f.forEach(e=>a.fx.push({e,lv:lv[j]||5}));});});
   if(MODE!=='solo') c.join.forEach(([n,lv])=>{const h=HMAP[n]; if(!h||!h.x[0])return; used.push({h:n,s:h.x[0].k,lv,src:'ผู้ร่วม'}); h.x[0].f.forEach(e=>a.fx.push({e,lv}));});
+  const pt=c.pet||{}; for(const x of PETS) if(pt[x.k]&&!['atk','def','leth','hp'].includes(x.s)) a.fx.push({e:[x.s,'A',[Math.min(petMax(x.k),pt[x.k])]],lv:1,pet:x.k});
   a.used=used; return a;
 }
 function zero(){const o={};for(const s of [...SELF,...ENEMY])o[s]={I:0,L:0,M:0};o.vs={I:{I:0,L:0,M:0},L:{I:0,L:0,M:0},M:{I:0,L:0,M:0}};return o;}
@@ -595,7 +620,7 @@ function effStats(a,me,deb){
       A:bA*(1+rp[0])*Math.max(.05,1+me.atk[t]-deb.eatk[t])*ts.atk,
       D:bD*(1+rp[1])*Math.max(.05,1+me.def[t]-deb.edef[t])*ts.def,
       L:bL*(1+rp[2])*Math.max(.05,1+me.leth[t]-deb.eleth[t]),
-      H:bH*(1+rp[3])*Math.max(.05,1+me.hp[t]),
+      H:bH*(1+rp[3])*Math.max(.05,1+me.hp[t]-me.ehp[t]),
       out:Math.max(0,1+me.dmg[t])*Math.max(.05,1-deb.edmg[t])*ts.dmg,
       inc:(1+deb.vuln[t])*Math.max(.1,1-me.taken[t])*ts.taken,
       vs:me.vs[t]};}
@@ -703,7 +728,7 @@ function bearFight(A,rounds,K){
   for(let t=1;t<=rounds;t++){
     const m=zero(), deb=zero(); applyFx(A,m,deb,t,true,st);
     // ลดป้องกันหมีคิดแบบเส้นตรง (ลด 25% ≈ ดาเมจ +25%) — หมีไม่มีบัฟป้องกันมาหักล้าง ถ้าหารตรงๆ ดีบัฟซ้อนหลายตัวจะพุ่งเกินจริงหลายสิบเท่า
-    const e=effStats(A,m,m), bDH=BEAR.D*BEAR.H/(1+deb.edef.I), inc=1+deb.vuln.I;
+    const e=effStats(A,m,m), bDH=BEAR.D*BEAR.H/(1+deb.edef.I)/(1+deb.ehp.I), inc=1+deb.vuln.I;
     let r=0;
     for(const i of TY){
       const c=K*CFG.bear.cal*(1+.05*(CFG.bear.lv||0))*Math.sqrt(BEAR.n)*e[i].A*e[i].L*e[i].out*(1+e[i].vs.I)*inc*(COUNTER[i]==='I'?1.10:1)/bDH;
@@ -788,6 +813,8 @@ async function adviseBear(){
   prog('ลองบัฟไอเทม…'); await tick();
   const bufs=[]; for(const s of ['atk','leth']){const cur=(mine0.buf||{})[s]||0; if(cur>=20) continue;
     const c=clone(mine0); c.buf=Object.assign({atk:0,def:0,leth:0,hp:0},c.buf||{}); c.buf[s]=20; bufs.push({s,cur,e:ev(c,200)});}
+  for(const x of PETS){ if(!['atk','leth','edef','ehp'].includes(x.s)) continue; const cur=(mine0.pet||{})[x.k]||0; if(cur>=petMax(x.k)) continue;
+    const c=clone(mine0); c.pet=Object.assign({},c.pet); c.pet[x.k]=petMax(x.k); bufs.push({pet:x.k,cur,lab:`🐾 ${x.th} (${x.n}) ${STATN[x.s]} ${petMax(x.k)}%`,e:ev(c,200)});}
   // 3) ฮีโร่ผู้นำ ต่อช่อง (สายเดิม · ไม่เกิน Gen ที่มี)
   const heroSug=[], maxG=Math.max(0,...mine0.heroes.map(h=>HMAP[h[0]]?.g||0));
   if(tryHero) for(let i=0;i<3;i++){ prog(`ลองฮีโร่ช่อง ${i+1}…`); await tick();
@@ -803,7 +830,7 @@ async function adviseBear(){
   const COMM=['Jessie','Jasser','Jeronimo','Jessie'], cc=clone(mine0); cc.join=COMM.map(n=>[n,5]); const commE=ev(cc,200);
   // 5) รวมทุกอย่าง แล้วหาสัดส่วนใหม่ตามฮีโร่ชุดใหม่
   prog('รวมทุกข้อ…'); await tick();
-  const combo=clone(mine0); combo.buf=Object.assign({atk:0,def:0,leth:0,hp:0},combo.buf||{}); bufs.forEach(b=>combo.buf[b.s]=20);
+  const combo=clone(mine0); combo.buf=Object.assign({atk:0,def:0,leth:0,hp:0},combo.buf||{}); bufs.forEach(b=>{ if(b.pet){combo.pet=Object.assign({},combo.pet); combo.pet[b.pet]=petMax(b.pet);} else combo.buf[b.s]=20; });
   heroSug.forEach(h=>combo.heroes[h.slot]=[h.n,[5,5,5],combo.heroes[h.slot][2]??10]); combo.join=joinBest.join.map(n=>[n,5]);
   setTroops(combo,optTroops(ev(combo,150).cf,N,inf)); const comboE=ev(combo,300);
   ADV={side:'B',combo,joinBest};
@@ -813,8 +840,8 @@ async function adviseBear(){
   h+=`<h3>1. สัดส่วนทหาร (ยอดรวมเท่าเดิม ${fmt(N)})</h3><div class="scroll"><table><tr><th>แบบ</th><th>ราบ/หอก/ธนู %</th><th>ดาเมจ</th><th></th></tr>`;
   rRows.sort((a,b)=>b.e.avg-a.e.avg).forEach(r=>h+=`<tr><td>${r.nm}</td><td>${rpct(r.n).join(' / ')}</td><td>${big(r.e.avg)} ${dd(r.e.avg,base.avg)}</td><td>${r.nm==='ตอนนี้'?'':`<button class="btn ghost" data-br="${r.n.join(',')}">ใช้</button>`}</td></tr>`);
   h+='</table></div>';
-  h+='<h3>2. บัฟไอเทม +20% (ตีหมีใช้แค่โจมตีกับสังหาร)</h3>';
-  h+= bufs.length? `<div class="scroll"><table><tr><th>เปิดบัฟ</th><th>ดาเมจ</th></tr>`+bufs.map(b=>`<tr><td>${STATN[b.s]} +20%${b.cur?' (ตอนนี้ +'+b.cur+'%)':''}</td><td>${big(b.e.avg)} ${dd(b.e.avg,base.avg)}</td></tr>`).join('')+'</table></div>' : '<div>เปิดบัฟโจมตีและสังหารครบ +20% แล้ว</div>';
+  h+='<h3>2. บัฟไอเทม +20% และสกิลสัตว์เลี้ยง (ตีหมีใช้แค่โจมตี สังหาร และดีบัฟศัตรู)</h3>';
+  h+= bufs.length? `<div class="scroll"><table><tr><th>เปิดบัฟ</th><th>ดาเมจ</th></tr>`+bufs.sort((a,b)=>b.e.avg-a.e.avg).map(b=>`<tr><td>${b.lab||STATN[b.s]+' +20%'}${b.cur?' (ตอนนี้ '+b.cur+'%)':''}</td><td>${big(b.e.avg)} ${dd(b.e.avg,base.avg)}</td></tr>`).join('')+'</table></div>' : '<div>เปิดบัฟและสกิลสัตว์เลี้ยงที่ช่วยตีหมีครบแล้ว</div>';
   if(tryHero){ h+=`<h3>3. ฮีโร่ผู้นำที่ช่วยได้มากสุด (สายเดิม · สกิล Lv5 · ไม่เกิน Gen ${maxG})</h3>`;
     h+= heroSug.length? `<div class="scroll"><table><tr><th>ช่อง</th><th>เปลี่ยนจาก → เป็น</th><th>ดาเมจ</th><th></th></tr>`+heroSug.map(s=>`<tr><td>${s.slot+1}</td><td>${s.cur||'—'} → <b>${s.n}</b></td><td>${big(s.e.avg)} ${dd(s.e.avg,base.avg)}</td><td><button class="btn ghost" data-bh="${s.slot},${s.n}">ใช้</button></td></tr>`).join('')+'</table></div>' : '<div>ฮีโร่ชุดนี้ดีที่สุดแล้วในสายเดียวกัน</div>'; }
   h+=`<h3>4. ผู้ร่วม 4 คน (สกิลแรกของฮีโร่ช่องแรก Lv5)</h3>
@@ -885,6 +912,8 @@ async function advise(){
   prog('ลองบัฟไอเทม…'); await tick();
   const bufs=[]; for(const s of ['atk','def','leth','hp']){const cur=(mine0.buf||{})[s]||0; if(cur>=20) continue;
     const c=clone(mine0); c.buf=c.buf||{atk:0,def:0,leth:0,hp:0}; c.buf[s]=20; bufs.push({s,cur,e:ev(c,150)});}
+  for(const x of PETS){ const cur=(mine0.pet||{})[x.k]||0; if(cur>=petMax(x.k)) continue;
+    const c=clone(mine0); c.pet=Object.assign({},c.pet); c.pet[x.k]=petMax(x.k); bufs.push({pet:x.k,cur,lab:`🐾 ${x.th} (${x.n}) ${STATN[x.s]} ${petMax(x.k)}%`,e:ev(c,150)});}
   bufs.sort((a,b)=>b.e.score-a.e.score);
   // 3) ฮีโร่ (ตัวที่ถ้ามี จะช่วยมากสุด ต่อช่อง)
   const heroSug=[];
@@ -904,7 +933,8 @@ async function advise(){
   // 5) รวมทุกอย่าง
   prog('รวมทุกข้อ…'); await tick();
   const combo=clone(mine0); setRatio(combo,bestR.r);
-  if(bufs.length) combo.buf=Object.assign({atk:0,def:0,leth:0,hp:0},combo.buf||{}), ['atk','def','leth','hp'].forEach(s=>combo.buf[s]=20);
+  if(bufs.some(b=>!b.pet)) combo.buf=Object.assign({atk:0,def:0,leth:0,hp:0},combo.buf||{}), ['atk','def','leth','hp'].forEach(s=>combo.buf[s]=20);
+  if(bufs.some(b=>b.pet)){ combo.pet=Object.assign({},combo.pet); PETS.forEach(x=>combo.pet[x.k]=petMax(x.k)); }
   heroSug.forEach(h=>combo.heroes[h.slot]=[h.n,[5,5,5],combo.heroes[h.slot][2]??10]);
   if(joinBest) combo.join=joinBest.join.map(n=>[n,5]);
   const comboE=ev(combo,200);
@@ -945,8 +975,8 @@ function renderAdvice(side,mine0,base,top,bufs,heroSug,joinBest,comboE,need){
   h+=`<h3>1. สัดส่วนทหาร (ยอดรวมเท่าเดิม) · ตอนนี้ ${rtxt(cur)}</h3><div class="scroll"><table><tr><th>สัดส่วน %</th><th>${W}</th><th>เราเสีย</th><th>ศัตรูเสีย</th><th></th></tr>`;
   top.forEach((t,i)=>h+=`<tr><td>${i===0?'⭐ ':''}${rtxt(t.r)}</td><td>${pct(t.win)} ${dp(t.win,base.win)}</td><td>${pct(t.own)}</td><td>${pct(t.enemy)}</td><td><button class="btn ghost" data-ar="${t.r.join(',')}">ใช้</button></td></tr>`);
   h+='</table></div>';
-  h+=`<h3>2. บัฟไอเทม +20%</h3>`;
-  h+= bufs.length? `<div class="scroll"><table><tr><th>เปิดบัฟ</th><th>${W}</th></tr>`+bufs.map(b=>`<tr><td>${STATN[b.s]} +20%${b.cur?' (ตอนนี้ +'+b.cur+'%)':''}</td><td>${pct(b.e.win)} ${dp(b.e.win,base.win)}</td></tr>`).join('')+'</table></div>' : '<div>เปิดบัฟครบ +20% แล้ว</div>';
+  h+=`<h3>2. บัฟไอเทม +20% และสกิลสัตว์เลี้ยง</h3>`;
+  h+= bufs.length? `<div class="scroll"><table><tr><th>เปิดบัฟ</th><th>${W}</th><th>เราเสีย</th><th>ศัตรูเสีย</th></tr>`+bufs.map(b=>`<tr><td>${b.lab||STATN[b.s]+' +20%'}${b.cur?' (ตอนนี้ '+b.cur+'%)':''}</td><td>${pct(b.e.win)} ${dp(b.e.win,base.win)}</td><td>${pct(b.e.own)} (เดิม ${pct(base.own)})</td><td>${pct(b.e.enemy)} (เดิม ${pct(base.enemy)})</td></tr>`).join('')+'</table></div>' : '<div>เปิดบัฟไอเทมและสกิลสัตว์เลี้ยงครบแล้ว</div>';
   if(document.getElementById('advHero').checked){
     h+=`<h3>3. ฮีโร่ที่ช่วยได้มากสุด (ถ้ามีตัวนี้ · สกิล Lv5 · ไม่เกิน Gen ${Math.max(0,...mine0.heroes.map(x=>HMAP[x[0]]?.g||0))} ที่ใช้อยู่)</h3>`;
     h+= heroSug.length? `<div class="scroll"><table><tr><th>ช่อง</th><th>เปลี่ยนจาก → เป็น</th><th>${W}</th><th>เราเสีย</th><th>ศัตรูเสีย</th><th></th></tr>`+heroSug.map(s=>`<tr><td>${s.slot+1}</td><td>${s.cur||'—'} → <b>${s.n}</b></td><td>${pct(s.e.win)} ${dp(s.e.win,base.win)}</td><td>${pct(s.e.own)} (เดิม ${pct(base.own)})</td><td>${pct(s.e.enemy)} (เดิม ${pct(base.enemy)})</td><td><button class="btn ghost" data-ah="${s.slot},${s.n}">ใช้</button></td></tr>`).join('')+'</table></div>' : '<div>ฮีโร่ชุดนี้ดีที่สุดแล้วในสายเดียวกัน</div>';
