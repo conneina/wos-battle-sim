@@ -34,6 +34,7 @@ h1{margin:0;font-size:20px} h1 small{font-weight:400;color:var(--mute);font-size
 .side.def{border-top:4px solid var(--def);background:linear-gradient(var(--defbg),transparent 140px),var(--panel)}
 .side h2{margin:0 0 8px;font-size:17px}
 .side.atk h2{color:var(--atk)} .side.def h2{color:var(--def)}
+.side.bear{border-top:4px solid var(--warn)} .side.bear h2{color:var(--warn)}
 h3{font-size:13px;margin:12px 0 6px;color:var(--mute);font-weight:600;text-transform:none}
 table{border-collapse:collapse;width:100%}
 th,td{padding:4px 4px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -92,16 +93,16 @@ details{margin-top:10px} summary{cursor:pointer;color:var(--accent)}
 </head>
 <body>
 <header><div class="wrap" style="padding:0">
-  <h1>WOS Battle Sim <small>ตัวจำลองการรบ Whiteout Survival · โจมตีเดี่ยว / ระดม · ฝั่งโจมตี vs ป้องกัน</small></h1>
+  <h1>WOS Battle Sim <small>ตัวจำลองการรบ Whiteout Survival · โจมตีเดี่ยว / ระดม / ตีหมี</small></h1>
 </div></header>
 
 <div class="wrap">
   <div class="bar">
     <span>โหมด</span>
-    <div class="seg" id="modeSeg"><button data-m="solo" class="on">โจมตีเดี่ยว (Solo)</button><button data-m="rally">ระดม (Rally) vs รักษาเมือง (Garrison)</button></div>
-    <label><input type="checkbox" id="city" checked> เป้าหมายเป็นเมืองผู้เล่น (ฝั่งบุกตายจริง 35%)</label>
+    <div class="seg" id="modeSeg"><button data-m="solo" class="on">โจมตีเดี่ยว (Solo)</button><button data-m="rally">ระดม (Rally) vs รักษาเมือง (Garrison)</button><button data-m="bear">🐻 ตีหมี (Bear Hunt)</button></div>
+    <label id="cityL"><input type="checkbox" id="city" checked> เป้าหมายเป็นเมืองผู้เล่น (ฝั่งบุกตายจริง 35%)</label>
     <label>รอบจำลอง <input type="number" id="runs" value="300" min="1" max="5000" style="width:70px"></label>
-    <label>เทิร์นสูงสุด <input type="number" id="maxT" value="300" min="10" max="5000" style="width:70px"></label>
+    <label id="maxTL">เทิร์นสูงสุด <input type="number" id="maxT" value="300" min="10" max="5000" style="width:70px"></label>
     <label title="ค่าคงที่สูตร: ทหารที่ฆ่าได้ = K × √จำนวน × (โจมตี×สังหาร)/(ป้องกัน×พลังชีวิต)">ค่า K <input type="number" id="K" value="1" step="0.05" min="0.01" style="width:70px"></label>
     <span style="flex:1"></span>
     <button class="btn ghost" id="swap">สลับฝั่ง</button>
@@ -118,7 +119,7 @@ details{margin-top:10px} summary{cursor:pointer;color:var(--accent)}
   <div class="res">
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
       <b style="font-size:16px">🧭 แนะนำการแก้ทาง</b>
-      <label>หาวิธีให้ <select id="advSide"><option value="A">ฝั่งโจมตี</option><option value="D">ฝั่งป้องกัน</option></select></label>
+      <label id="advSideL">หาวิธีให้ <select id="advSide"><option value="A">ฝั่งโจมตี</option><option value="D">ฝั่งป้องกัน</option></select></label>
       <label><input type="checkbox" id="advHero" checked> ลองเปลี่ยนฮีโร่ด้วย</label>
       <span style="flex:1"></span>
       <button class="btn" id="advGo">หาวิธีแก้ทาง</button>
@@ -135,6 +136,7 @@ details{margin-top:10px} summary{cursor:pointer;color:var(--accent)}
       • ทุกสายตีแถวหน้าก่อน: ทหารราบ → ทหารหอก → พลธนู · ทหารหอก T7+ ตีข้ามไปพลธนู 20% (Ambusher)<br>
       • สายที่ชนะทาง +10% (ราบ→หอก, หอก→ธนู, ธนู→ราบ) · ทหารราบ T7+ ป้องกัน +10% เมื่อโดนหอก · พลธนู T7+ ยิงสองครั้ง 10% · สกิล FC ของทหารคิดเป็นค่าเฉลี่ย<br>
       • สกิลฮีโร่ใช้เฉพาะสกิลออกรบ (Expedition) · สกิลที่เป็นโอกาส (%) สุ่มทุกเทิร์น จึงได้ผลแพ้ชนะเป็นเปอร์เซ็นต์ · สกิล “ทุก N เทิร์น” ทำงานตามเทิร์น<br>
+      • <b>ตีหมี</b>: หมี = ทหารราบพิเศษ 5,000 ตัว ป้องกัน 10 พลังชีวิต 83.3 · ไม่ตีกลับ ทหารเราไม่ตาย · สู้ 10 เทิร์น · ดาเมจต่อเทิร์นของแต่ละสาย = √(ทหารสายนั้น × 5,000) × โจมตี × สังหาร ÷ (ป้องกัน × พลังชีวิต ของหมี) × ตัวคูณดาเมจ · กับดักเลเวล 1–5 ให้ดาเมจ +5% ต่อเลเวล (เต็ม +25% ตาม whiteoutsurvival.wiki · ไกด์ Kingshot คิดเป็นโจมตี แต่ใน WOS ค่าโจมตี% สูงหลายพัน ถ้าคิดเป็นโจมตีกับดักแทบไม่มีผล) · สกิลลดป้องกันศัตรูคิดเป็นดาเมจเพิ่มแบบเส้นตรง (กันดีบัฟซ้อนแล้วพุ่งเกินจริง) · ตัวเลขหมีมาจากไกด์ Kingshot (kingshotguides.com) เกมค่ายเดียวกัน ยังไม่มีใครยืนยันกับ WOS จึงมีช่องปรับเทียบกับดาเมจจริง<br>
       • ระดม: ผู้นำใช้ 9 สกิล (3 ฮีโร่ × 3) + สกิลแรกของฮีโร่ช่องแรกผู้ร่วม 4 คน · ใช้ค่าสถานะของผู้นำทั้งกองทัพ · รักษาเมือง: ใช้ค่าสถานะของคนที่บัฟสูงสุด + สกิลแรกของผู้ร่วม 4 คน<br>
       • ค่าสถานะ % = โบนัสอื่น + ค่าออกรบของฮีโร่ (โจมตี/ป้องกัน ใส่สายเดียวกับฮีโร่ · ค่าที่ระดับสูงสุด) + อุปกรณ์เสริม (สังหาร/พลังชีวิต ตามสัดส่วนเลเวล 1–10)<br>
       • โบนัสพิเศษของอุปกรณ์เสริม: Lv1–2 5% · Lv3–4 7.5% · Lv5–6 10% · Lv7–8 12.5% · Lv9–10 15% ใช้ได้เฉพาะตอนนำระดม / ตอนป้องกัน ตามชนิด · ใช้สูตร wiki: รวม × (1 + พิเศษ) + พิเศษ<br>
@@ -317,8 +319,14 @@ const DEFAULTS={
  A:{troops:{I:[400000,11,10],L:[100000,11,10],M:[500000,11,10]},rep:{I:[300,300,250,250],L:[300,300,250,250],M:[300,300,250,250]},
     heroes:[['Jordan',[5,5,5],10],['Nikola',[5,5,5],10],['Aisha',[5,5,5],10]],join:[['Jessie',5],['Seo-yoon',5],['Eleanor',5],['Gwen',5]]},
  D:{troops:{I:[600000,11,10],L:[100000,11,10],M:[300000,11,10]},rep:{I:[300,300,250,250],L:[300,300,250,250],M:[300,300,250,250]},
-    heroes:[['Jordan',[5,5,5],10],['Nikola',[5,5,5],10],['Aisha',[5,5,5],10]],join:[['Sergey',5],['Patrick',5],['Ursar',5],['Aiden',5]]}
+    heroes:[['Jordan',[5,5,5],10],['Nikola',[5,5,5],10],['Aisha',[5,5,5],10]],join:[['Sergey',5],['Patrick',5],['Ursar',5],['Aiden',5]]},
+ // ทัพตีหมีแยกจากทัพ PvP · ผู้ร่วม Jessie/Jasser/Jeronimo สกิลแรก ดาเมจ +25% บวกกันได้ 4 คน = +100% (whiteoutsurvival.wiki)
+ B:{troops:{I:[100000,11,10],L:[100000,11,10],M:[800000,11,10]},rep:{I:[300,300,250,250],L:[300,300,250,250],M:[300,300,250,250]},
+    heroes:[['Jordan',[5,5,5],10],['Nikola',[5,5,5],10],['Aisha',[5,5,5],10]],join:[['Jessie',5],['Jasser',5],['Jeronimo',5],['Jessie',5]]},
+ bear:{lv:5,rounds:10,inf:true,cal:1}
 };
+const SC=id=>MODE==='bear'&&id==='A'?CFG.B:CFG[id]; // ฝั่ง A ในโหมดตีหมีใช้ทัพตีหมี
+const BEAR_PRE=[[10,10,80],[5,10,85],[3,12,85],[3,10,87],[1,1,98]];
 function heroOptions(sel){
   let o='<option value="">— ไม่ใส่ —</option>';
   const grp=[['Rare',HEROES.filter(h=>h.r==='R')],['Epic',HEROES.filter(h=>h.r==='E')]];
@@ -328,8 +336,9 @@ function heroOptions(sel){
   return o;
 }
 // "100k" → 100000 · "1.5m" → 1500000 · "40,000" → 40000
-function parseNum(s){s=String(s).trim().toLowerCase().replace(/[, ]/g,''); const m=s.match(/^([\d.]+)([km]?)$/); if(!m) return 0;
-  return Math.max(0,Math.round(parseFloat(m[1])*(m[2]==='k'?1e3:m[2]==='m'?1e6:1)))||0;}
+function parseNum(s){s=String(s).trim().toLowerCase().replace(/[, ]/g,''); const m=s.match(/^([\d.]+)([kmb]?)$/); if(!m) return 0;
+  return Math.max(0,Math.round(parseFloat(m[1])*(m[2]==='k'?1e3:m[2]==='m'?1e6:m[2]==='b'?1e9:1)))||0;}
+function big(n){return n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.round(n)+'';}
 function short(n){ if(n>=1e6&&n%1e4===0) return +(n/1e6).toFixed(2)+'m'; if(n>=1e3&&n%100===0) return +(n/1e3).toFixed(1)+'k'; return String(n);}
 const lvOpts=v=>[1,2,3,4,5].map(i=>`<option ${i===v?'selected':''}>${i}</option>`).join('');
 function tierOpts(v){return [1,2,3,4,5,6,7,8,9,10,11,12].map(i=>`<option value="${i}" ${i===v?'selected':''}>${i===12?'T12 Exalted':'T'+i}</option>`).join('')}
@@ -355,18 +364,21 @@ const META=[
  {name:'รักษาเมือง Gen 18',r:[60,10,30],pvp:1,when:'ตัวจำลอง Gen 18: เสียทหารน้อยสุดเมื่อโดนระดมแบบ 50/20/30 หรือ 40/10/50 · ทหารราบ 60–70% ไว้รับ',heroes:'Jordan · Nikola · Aisha เหมาะรักษาเมืองมาก: อุปกรณ์ Jordan ป้องกัน +15% และ Aisha สังหาร +15% ตอนป้องกัน',hs:G18,jD:JOIN_DEF,src:'heaven-guardian (เกิน 50% ราบ) · ตัวจำลอง'},
  {name:'รักษาเมือง',r:[60,20,20],pvp:1,when:'ฝั่งป้องกัน / garrison · ทหารราบหนาไว้รับดาเมจแถวหน้า',heroes:'ฮีโร่ราบสายทน · ตั้งทีมป้องกันแยกจากทีมบุก',hs:G18,jD:JOIN_DEF,src:'topuplive · wosformations'},
  {name:'ป้องกันหนัก',r:[70,30,0],pvp:1,when:'ตั้งรับอย่างเดียว เน้นทนให้นานที่สุด · ตัวจำลอง: แพ้ทาง 20/20/60',heroes:'ฮีโร่ราบสายทน',hs:G18,jD:JOIN_DEF,src:'topuplive · buffget'},
- {name:'Bear Hunt',r:[10,10,80],pvp:0,when:'อีเวนต์ล่าหมี (ผู้นำระดม) · หมีไม่ตีกลับ นับแค่ดาเมจ · ลองเพิ่ม 10/20/70 หรือ 5/5/90 · ไม่ใช่ PvP',heroes:'Gen 17 สายเติม: Jeronimo · Dominic · Eleanor · สายฟรี: Hector · Mia · Aisling',hs:['Jeronimo','Dominic','Eleanor'],jA:['Jessie','Jasser','Jeronimo','Seo-yoon'],src:'frostguard (12 ก.ย. 2026) · wosformations bear-trap'},
+ {name:'Bear Hunt',r:[10,10,80],pvp:0,when:'อีเวนต์ล่าหมี (ผู้นำระดม) · หมีไม่ตีกลับ นับแค่ดาเมจ · ลองเพิ่ม 10/20/70 หรือ 5/5/90 · ไม่ใช่ PvP',heroes:'Gen 17 สายเติม: Jeronimo · Dominic · Eleanor · สายฟรี: Hector · Mia · Aisling · Gen 7–12: Jeronimo · Mia · Bradley/Rufus',hs:['Jeronimo','Dominic','Eleanor'],jA:['Jessie','Jasser','Jeronimo','Jessie'],src:'frostguard (12 ก.ย. 2026) · wosformations bear-trap · whiteoutsurvival.wiki'},
  {name:'Crazy Joe',r:[90,10,0],pvp:0,when:'อีเวนต์ Crazy Joe ป้องกันเมือง (คลื่นปกติ) · ไม่ใช่ PvP',heroes:'ส่งเสริมกำลังด้วย Jessie / Jasser / Jeronimo ช่องแรก · เก็บฮีโร่แรงไว้ป้องกันบ้าน',jD:['Jessie','Jasser','Jeronimo','Jessie'],src:'wosformations crazy-joe'},
 ];
 function metaBox(id,cfg,rr){
   if(!rr.some(x=>x)) return '';
-  const near=META.map(m=>({m,d:Math.abs(m.r[0]-rr[0])+Math.abs(m.r[1]-rr[1])+Math.abs(m.r[2]-rr[2])})).sort((a,b)=>a.d-b.d)[0], m=near.m;
+  const bearM=MODE==='bear', dist=m=>Math.abs(m.r[0]-rr[0])+Math.abs(m.r[1]-rr[1])+Math.abs(m.r[2]-rr[2]);
+  const near=bearM?{m:META.find(x=>x.name==='Bear Hunt')}:META.map(m=>({m,d:dist(m)})).sort((a,b)=>a.d-b.d)[0], m=near.m;
+  if(bearM) near.d=Math.round(dist(m));
   const match=near.d<=10;
   const role=id==='A'?'jA':'jD', join=m[role]||(id==='A'?JOIN_ATK:JOIN_DEF);
   // แก้ทางตามสัดส่วนศัตรู (wosformations)
   const o=CFG[id==='A'?'D':'A'], ot=TY.reduce((s,t)=>s+o.troops[t][0],0)||1, er=TY.map(t=>Math.round(o.troops[t][0]/ot*100));
   let ctr='';
-  if(er[2]>=50) ctr=`ศัตรูเป็นพลธนู ${er[2]}% → เพิ่ม<b>ทหารหอก</b> (+10% ใส่ธนู · T7+ ข้ามแนวไปตีธนู 20%) แต่คงทหารราบไว้กันหน้า`;
+  if(bearM) ctr=`หมีเป็นทหารราบ → <b>พลธนู</b>ได้ +10% · ทหารเราไม่ตาย จึงไม่ต้องมีแนวหน้าหนา · ดาเมจโตตาม √ทหารของแต่ละสาย ใส่สายเดียวล้วนจะเสียดาเมจ · ไกด์แนะนำทหารราบอย่างน้อย 5,000 · หลัง Gen 8 ถ้าสังหารของพลธนูสูงกว่าทหารหอกมาก ให้ลดหอกเหลือ 10–15% แล้วดันพลธนูเกิน 85%`;
+  else if(er[2]>=50) ctr=`ศัตรูเป็นพลธนู ${er[2]}% → เพิ่ม<b>ทหารหอก</b> (+10% ใส่ธนู · T7+ ข้ามแนวไปตีธนู 20%) แต่คงทหารราบไว้กันหน้า`;
   else if(er[0]>=55) ctr=`ศัตรูตั้งกำแพงทหารราบ ${er[0]}% → เพิ่ม<b>พลธนู</b>หลังแนวราบของเรา (+10% ใส่ราบ) · ราบ+หอกล้วนจะเสียเปรียบ`;
   else if(er[1]>=35) ctr=`ศัตรูมีทหารหอก ${er[1]}% → ให้<b>ทหารราบ</b>นำหน้า (+10% ใส่หอก) และพลธนูอยู่หลัง`;
   else ctr=`ศัตรูสมดุล (${er.join('/')}) → ไม่มีสัดส่วนแก้ทางตายตัว ลองปุ่ม “หาวิธีแก้ทาง” ด้านล่าง`;
@@ -374,26 +386,26 @@ function metaBox(id,cfg,rr){
     <div><b>📌 ${match?'ตรงกับเมต้า':'ใกล้สุดคือเมต้า'}: ${m.name} ${m.r.join('/')}</b> ${match?'':`<span class="note">(ต่างจากของคุณ ${near.d}%)</span>`} ${m.pvp?'':'<span class="tag">อีเวนต์ ไม่ใช่ PvP</span>'}</div>
     <div>${m.when}</div>
     <div><b>ฮีโร่:</b> ${m.heroes} ${m.hs?`<button class="btn ghost" data-mh="${m.hs.join(',')}" style="padding:1px 8px;font-size:12px">ใช้ ${m.hs.join(' · ')}</button>`:''}</div>
-    ${MODE==='rally'?`<div><b>ผู้ร่วม${id==='A'?'ระดม':'รักษาเมือง'}แนะนำ:</b> ${join.join(' · ')} (สกิลแรก Lv5) <button class="btn ghost" data-mj="${join.join(',')}" style="padding:1px 8px;font-size:12px">ใช้ผู้ร่วมชุดนี้</button></div>`:''}
-    <div><b>แก้ทางศัตรู:</b> ${ctr}</div>
+    ${MODE!=='solo'?`<div><b>ผู้ร่วม${id==='A'?'ระดม':'รักษาเมือง'}แนะนำ:</b> ${join.join(' · ')} (สกิลแรก Lv5) <button class="btn ghost" data-mj="${join.join(',')}" style="padding:1px 8px;font-size:12px">ใช้ผู้ร่วมชุดนี้</button></div>`:''}
+    <div><b>${bearM?'หลักตีหมี':'แก้ทางศัตรู'}:</b> ${ctr}</div>
     <div class="note">ที่มา: ${m.src} · เมต้าเป็นแนวทาง ไม่ใช่สูตรตายตัว${m.src.includes('ตัวจำลอง')?' · ข้อที่บอกว่า “ตัวจำลอง” มาจากการลองทีม Gen 18 ในหน้านี้ เพราะยังไม่มีเว็บไหนเขียนเมต้า PvP ของ Gen 18':''}</div>
   </div>`;
 }
 function renderSide(id,cfg){
   const el=document.getElementById(id==='A'?'sideA':'sideD');
   const isA=id==='A';
-  const title = MODE==='solo' ? (isA?'ฝั่งโจมตี':'ฝั่งป้องกัน') : (isA?'ฝั่งโจมตี · ผู้นำระดม':'ฝั่งป้องกัน · รักษาเมือง (Garrison)');
+  const title = MODE==='bear' ? '🐻 ทัพตีหมี · ผู้นำระดม' : MODE==='solo' ? (isA?'ฝั่งโจมตี':'ฝั่งป้องกัน') : (isA?'ฝั่งโจมตี · ผู้นำระดม':'ฝั่งป้องกัน · รักษาเมือง (Garrison)');
   let h=`<h2>${title}</h2>
-  <h3>ทหาร ${MODE==='rally'?'(รวมทั้งกองระดม/ทั้งเมือง)':''}</h3>`;
+  <h3>ทหาร ${MODE==='bear'?'(รวมทั้งกองระดม)':MODE!=='solo'?'(รวมทั้งกองระดม/ทั้งเมือง)':''}</h3>`;
   const tot=TY.reduce((s,t)=>s+cfg.troops[t][0],0), rr=TY.map(t=>tot?+(cfg.troops[t][0]/tot*100).toFixed(1):0);
   h+=`<div class="quick">
     <label>ยอดรวม <input type="text" inputmode="decimal" data-q="total" value="${short(tot)}" style="width:90px;font-weight:700"></label>
     <span>สัดส่วน</span>
-    <label>ราบ <input type="number" data-q="I" value="${rr[0]}" min="0" style="width:56px"></label>
-    <label>หอก <input type="number" data-q="L" value="${rr[1]}" min="0" style="width:56px"></label>
-    <label>ธนู <input type="number" data-q="M" value="${rr[2]}" min="0" style="width:56px"></label>
+    <label>ราบ <input type="number" data-q="I" value="${rr[0]}" min="0" step="any" style="width:56px"></label>
+    <label>หอก <input type="number" data-q="L" value="${rr[1]}" min="0" step="any" style="width:56px"></label>
+    <label>ธนู <input type="number" data-q="M" value="${rr[2]}" min="0" step="any" style="width:56px"></label>
     <button class="btn" data-q="ok" style="padding:5px 16px">ตกลง</button>
-    <div class="presets">เมต้า: ${META.map(m=>`<button class="btn ghost" data-preset="${m.r.join(',')}" title="${m.when}">${m.name} ${m.r.join('/')}</button>`).join('')}</div>
+    <div class="presets">เมต้า: ${MODE==='bear'?BEAR_PRE.map(r=>`<button class="btn ghost" data-preset="${r.join(',')}">ตีหมี ${r.join('/')}</button>`).join(''):META.map(m=>`<button class="btn ghost" data-preset="${m.r.join(',')}" title="${m.when}">${m.name} ${m.r.join('/')}</button>`).join('')}</div>
     <div class="note">พิมพ์ยอดรวม (100k, 1.5m ได้) ใส่สัดส่วน 3 ช่อง แล้วกด “ตกลง” หรือ Enter · สัดส่วนรวมไม่ถึง 100 ก็ได้ ระบบเทียบให้เอง</div>
   </div>
   <div class="scroll"><table><tr><th>สาย</th><th>จำนวน</th><th>เทียร์</th><th>FC</th></tr>`;
@@ -403,7 +415,7 @@ function renderSide(id,cfg){
     <td><select data-k="fc" data-t="${t}" ${ti===10||ti===11?'':'disabled'}>${fcOpts(fc)}</select></td></tr>`;}
   h+=`<tr><td><b>รวม</b></td><td colspan="3"><b>${fmt(tot)}</b> นาย · ราบ ${rr[0]}% · หอก ${rr[1]}% · ธนู ${rr[2]}%</td></tr>`;
   h+=`</table></div>${metaBox(id,cfg,rr)}
-  <h3>ค่าสถานะ % ${cfg.incl?'— ยอดรวมจากรายงานการรบ':'— โบนัสอื่นที่ไม่ใช่ฮีโร่ (เทค ชาร์ม เกียร์ผู้นำ ฯลฯ)'} ${MODE==='rally'?(isA?'· ของผู้นำ':'· ของคนที่บัฟสูงสุด'):''}</h3>
+  <h3>ค่าสถานะ % ${cfg.incl?'— ยอดรวมจากรายงานการรบ':'— โบนัสอื่นที่ไม่ใช่ฮีโร่ (เทค ชาร์ม เกียร์ผู้นำ ฯลฯ)'} ${MODE!=='solo'?(isA?'· ของผู้นำ':'· ของคนที่บัฟสูงสุด'):''}</h3>
   <div class="note" style="margin-bottom:6px">โบนัสทหารเป็น % ที่ท้ายรายงานการรบ (รายงานเดียวกันมีของทั้งเราและศัตรู) · <b>โจมตี</b> = ตีแรงขึ้น · <b>ป้องกัน</b> = โดนตีเบาลง · <b>สังหาร</b> = ดาเมจทะลุเกราะ (ความแรง) · <b>พลังชีวิต</b> = เลือด<br>
   ${cfg.incl?'กรอกตัวเลขจากรายงานตรงๆ ได้เลย':'ถ้าจะกรอกตัวเลขจากรายงานตรงๆ ให้ติ๊กช่องข้างล่าง เพราะในรายงานรวมค่าฮีโร่กับอุปกรณ์เสริมไว้แล้ว'}</div>
   <label class="note" style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input type="checkbox" data-k="incl" ${cfg.incl?'checked':''}> ค่าที่กรอกเป็นยอดรวมจากรายงานการรบแล้ว (ไม่บวกค่าฮีโร่/อุปกรณ์เสริมซ้ำ)</label>
@@ -414,7 +426,7 @@ function renderSide(id,cfg){
   <h3>บัฟไอเทม (+10% / +20%) · ใช้กับทหารทุกสาย</h3>
   <div style="display:flex;flex-wrap:wrap;gap:8px 14px">${['atk','def','leth','hp'].map(s=>`<label>${STATN[s]} <select data-k="buf" data-s="${s}">${[0,10,20].map(v=>`<option value="${v}" ${v===(bf[s]||0)?'selected':''}>${v?'+'+v+'%':'ไม่มี'}</option>`).join('')}</select></label>`).join('')}</div>
   <div class="note">บวกเข้ากับค่าสถานะ % ข้างบน · ถ้าตัวเลขที่ลอกจากรายงานมีบัฟนี้อยู่แล้ว ให้ตั้งเป็น "ไม่มี" จะได้ไม่นับซ้ำ</div>
-  <h3>ฮีโร่ 3 ตัว ${MODE==='rally'?(isA?'(ผู้นำ · ใช้ครบ 9 สกิล)':'(เจ้าของเมือง · ใช้ครบ 9 สกิล)'):''}</h3>`;
+  <h3>ฮีโร่ 3 ตัว ${MODE!=='solo'?(isA?'(ผู้นำ · ใช้ครบ 9 สกิล)':'(เจ้าของเมือง · ใช้ครบ 9 สกิล)'):''}</h3>`;
   cfg.heroes.forEach(([n,lv,gl],i)=>{ const hero=HMAP[n], hs=heroStat(n); gl=gl??10;
     let stat='';
     if(hs){ const ty=TYN[hero.t];
@@ -426,7 +438,7 @@ function renderSide(id,cfg){
     h+=`<div class="hero"><span class="tag">ช่อง ${i+1}</span><select class="h" data-k="hero" data-i="${i}">${heroOptions(n)}</select>
     ${stat}
     <div class="lv">${hero?hero.x.map((s,j)=>`<label title="${skillDesc(s)}">${s.k} <select data-k="hlv" data-i="${i}" data-j="${j}">${lvOpts(lv[j]||5)}</select></label>`).join(''):'<span>—</span>'}</div></div>`;});
-  h+=`<div class="joiners ${MODE==='rally'?'':'hide'}"><h3>ผู้ร่วม 4 คน · นับเฉพาะสกิลแรกของฮีโร่ช่องแรก</h3>`;
+  h+=`<div class="joiners ${MODE!=='solo'?'':'hide'}"><h3>ผู้ร่วม 4 คน · นับเฉพาะสกิลแรกของฮีโร่ช่องแรก</h3>`;
   cfg.join.forEach(([n,lv],i)=>{const hero=HMAP[n];
     h+=`<div class="hero"><span class="tag">คนที่ ${i+1}</span><select class="h" data-k="join" data-i="${i}">${heroOptions(n)}</select>
     <select data-k="jlv" data-i="${i}" title="เลเวลสกิล">${lvOpts(lv)}</select>
@@ -447,12 +459,13 @@ function skillDesc(s,lv){
 }
 let CFG=loadCfg();
 function loadCfg(){try{const s=localStorage.getItem('wos_sim_cfg'); if(s){const c=JSON.parse(s); if(c.A&&c.D){MODE=c.mode||'solo';
-  for(const sd of [c.A,c.D]) if(sd.buf) for(const k in sd.buf) sd.buf[k]=Math.min(20,Math.round((sd.buf[k]||0)/10)*10); // ค่าเก่าที่เกิน 20% ปรับเข้า 0/10/20
+  if(!c.B) c.B=JSON.parse(JSON.stringify(DEFAULTS.B)); c.bear=Object.assign({},DEFAULTS.bear,c.bear||{});
+  for(const sd of [c.A,c.D,c.B]) if(sd.buf) for(const k in sd.buf) sd.buf[k]=Math.min(20,Math.round((sd.buf[k]||0)/10)*10); // ค่าเก่าที่เกิน 20% ปรับเข้า 0/10/20
   return c;}}}catch(e){} return JSON.parse(JSON.stringify(DEFAULTS));}
 function saveCfg(){try{localStorage.setItem('wos_sim_cfg',JSON.stringify({...CFG,mode:MODE}))}catch(e){}}
 function bindSide(id){
   const el=document.getElementById(id==='A'?'sideA':'sideD');
-  const quickApply=()=>{const c=CFG[id], q=s=>el.querySelector(`[data-q="${s}"]`);
+  const quickApply=()=>{const c=SC(id), q=s=>el.querySelector(`[data-q="${s}"]`);
     const T=parseNum(q('total').value), r=TY.map(t=>Math.max(0,+q(t).value||0)), S=r[0]+r[1]+r[2];
     if(!T||!S){ q('total').style.outline='2px solid var(--atk)'; return; }
     TY.forEach((t,i)=>c.troops[t][0]=Math.round(T*r[i]/S)); c.troops.I[0]+=T-TY.reduce((s,t)=>s+c.troops[t][0],0);
@@ -460,10 +473,10 @@ function bindSide(id){
   el.onclick=e=>{const d=e.target.dataset;
     if(d.preset){const p=d.preset.split(','); TY.forEach((t,i)=>el.querySelector(`[data-q="${t}"]`).value=p[i]); quickApply();}
     if(d.q==='ok') quickApply();
-    if(d.mj){CFG[id].join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();}
-    if(d.mh){const c=CFG[id]; d.mh.split(',').forEach((n,i)=>c.heroes[i]=[n,[5,5,5],c.heroes[i]?.[2]??10]); saveCfg(); rerender();} };
+    if(d.mj){SC(id).join=d.mj.split(',').map(n=>[n,5]); saveCfg(); rerender();}
+    if(d.mh){const c=SC(id); d.mh.split(',').forEach((n,i)=>c.heroes[i]=[n,[5,5,5],c.heroes[i]?.[2]??10]); saveCfg(); rerender();} };
   el.onkeydown=e=>{ if(e.key==='Enter'&&e.target.dataset.q){ e.preventDefault(); quickApply(); } };
-  el.onchange=e=>{const c=CFG[id], d=e.target.dataset, v=e.target.value;
+  el.onchange=e=>{const c=SC(id), d=e.target.dataset, v=e.target.value;
     if(d.k==='cnt'){c.troops[d.t][0]=parseNum(v); rerender();}
     if(d.k==='total'){const T=parseNum(v), cur=TY.reduce((s,t)=>s+c.troops[t][0],0);
       const r=cur?TY.map(t=>c.troops[t][0]/cur):[.5,.2,.3];
@@ -486,14 +499,50 @@ function bindSide(id){
     saveCfg();
   };
 }
-function rerender(){renderSide('A',CFG.A);renderSide('D',CFG.D);
+function rerender(){const bear=MODE==='bear';
+  renderSide('A',bear?CFG.B:CFG.A); if(bear) renderBear(); else renderSide('D',CFG.D);
+  document.getElementById('sideD').className='side '+(bear?'bear':'def');
+  ['cityL','maxTL','swap','advSideL'].forEach(i=>document.getElementById(i).classList.toggle('hide',bear));
+  const gl=bear?'▶ จำลองตีหมี':'▶ จำลองการรบ'; document.getElementById('go').textContent=gl; const f=document.getElementById('fab'); if(f) f.textContent=gl;
   document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));}
+/* ===================== แผงหมี ===================== */
+function renderBear(){
+  const b=CFG.bear, el=document.getElementById('sideD');
+  el.innerHTML=`<h2>🐻 หมี (Bear Hunt)</h2>
+  <div class="meta">
+    <div>หมีเป็นทหารราบพิเศษ 5,000 ตัว · ป้องกัน 10 · พลังชีวิต 83.3 ต่อตัว</div>
+    <div><b>หมีไม่ตีกลับ ทหารเราไม่ตาย</b> · สู้ ${b.rounds} เทิร์นแล้วจบ · คะแนน = ดาเมจรวม</div>
+    <div>ระดมนับสกิลผู้นำครบ 9 สกิล + สกิลแรกของฮีโร่ช่องแรกผู้ร่วม 4 คน · Jessie / Jasser / Jeronimo ให้ดาเมจ +25% บวกกันได้ ครบ 4 คน = +100%</div>
+    <div class="note">ค่าหมีและจำนวนเทิร์นมาจากไกด์ Kingshot (เกมค่ายเดียวกัน) ยังไม่มีใครยืนยันกับ WOS</div>
+  </div>
+  <h3>ตั้งค่าหมี</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+    <label>กับดัก (ลูกธนูระเบิด) <select data-b="lv">${[0,1,2,3,4,5].map(i=>`<option value="${i}" ${i===b.lv?'selected':''}>${i?'Lv'+i+' · ดาเมจ +'+i*5+'%':'ยังไม่อัป'}</option>`).join('')}</select></label>
+    <label>จำนวนเทิร์น <input type="number" data-b="rounds" value="${b.rounds}" min="1" max="50" style="width:64px"></label>
+    <label><input type="checkbox" data-b="inf" ${b.inf?'checked':''}> คงทหารราบอย่างน้อย 5,000 ตอนหาสัดส่วน</label>
+  </div>
+  <h3>ปรับเทียบกับดาเมจจริง</h3>
+  <div class="note" style="margin-bottom:6px">ตั้งทัพทางซ้ายให้ตรงกับระดมที่ตีจริง 1 ครั้ง แล้วใส่ดาเมจจากรายงาน (เช่น 350m, 1.2b) ตัวเลขดาเมจในหน้านี้จะกลายเป็นหน่วยในเกม</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="text" inputmode="decimal" data-b="real" placeholder="ดาเมจจริง" style="width:130px">
+    <button class="btn" data-b="cal" style="padding:5px 16px">ปรับเทียบ</button>${b.cal!==1?' <button class="btn ghost" data-b="reset" style="padding:5px 12px">ล้างค่าปรับเทียบ</button>':''}</div>
+  <div class="note" style="margin-top:6px">${b.cal!==1?'✓ ปรับเทียบแล้ว (×'+b.cal.toPrecision(4)+') ดาเมจที่แสดงเป็นหน่วยในเกมโดยประมาณ':'ยังไม่ได้ปรับเทียบ ตัวเลขดาเมจใช้เทียบกันเองในหน้านี้เท่านั้น (หน่วยตัวจำลอง)'}</div>`;
+}
+(()=>{const sD=document.getElementById('sideD');
+  sD.addEventListener('change',e=>{if(MODE!=='bear')return; const d=e.target.dataset,b=CFG.bear;
+    if(d.b==='lv') b.lv=+e.target.value; else if(d.b==='rounds') b.rounds=Math.max(1,Math.min(50,Math.round(+e.target.value)||10)); else if(d.b==='inf') b.inf=e.target.checked; else return;
+    saveCfg(); renderBear();});
+  sD.addEventListener('click',e=>{if(MODE!=='bear')return; const d=e.target.dataset,b=CFG.bear;
+    if(d.b==='cal'){const inp=sD.querySelector('[data-b="real"]'), real=parseNum(inp.value); if(!real){inp.style.outline='2px solid var(--atk)';return;}
+      b.cal=1; const m=bearSim(CFG.B,Math.max(1,Math.min(5000,+document.getElementById('runs').value||300))).avg; if(!m) return; b.cal=real/m; saveCfg(); renderBear(); run();}
+    if(d.b==='reset'){b.cal=1; saveCfg(); renderBear(); run();}});
+  sD.addEventListener('keydown',e=>{if(MODE==='bear'&&e.key==='Enter'&&e.target.dataset.b==='real'){e.preventDefault(); sD.querySelector('[data-b="cal"]').click();}});
+})();
 document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{MODE=b.dataset.m;saveCfg();rerender();});
 document.getElementById('swap').onclick=()=>{[CFG.A,CFG.D]=[CFG.D,CFG.A];saveCfg();rerender();};
 bindSide('A');bindSide('D');rerender();
 
 /* ===================== ตัวจำลอง ===================== */
-function gearCtxOn(ctx,role){return ctx==='T'||(ctx==='D'&&role==='D')||(ctx==='R'&&role==='A'&&MODE==='rally');}
+function gearCtxOn(ctx,role){return ctx==='T'||(ctx==='D'&&role==='D')||(ctx==='R'&&role==='A'&&MODE!=='solo');}
 // รวม % ค่าสถานะ: โบนัสอื่น + ค่าออกรบฮีโร่ + อุปกรณ์เสริม แล้วคูณโบนัสพิเศษ (สูตร wiki: รวม×(1+พิเศษ)+พิเศษ)
 function statPct(c,role){
   const p={}; for(const t of TY) p[t]=[...c.rep[t]]; // [atk,def,leth,hp] หน่วย %
@@ -517,7 +566,7 @@ function buildArmy(c,role){
     a.rep[t]=a.pct.p[t].map(x=>x/100);}
   const used=[];
   c.heroes.forEach(([n,lv])=>{const h=HMAP[n]; if(!h)return; h.x.forEach((s,j)=>{used.push({h:n,s:s.k,lv:lv[j]||5,src:'ฮีโร่'}); s.f.forEach(e=>a.fx.push({e,lv:lv[j]||5}));});});
-  if(MODE==='rally') c.join.forEach(([n,lv])=>{const h=HMAP[n]; if(!h||!h.x[0])return; used.push({h:n,s:h.x[0].k,lv,src:'ผู้ร่วม'}); h.x[0].f.forEach(e=>a.fx.push({e,lv}));});
+  if(MODE!=='solo') c.join.forEach(([n,lv])=>{const h=HMAP[n]; if(!h||!h.x[0])return; used.push({h:n,s:h.x[0].k,lv,src:'ผู้ร่วม'}); h.x[0].f.forEach(e=>a.fx.push({e,lv}));});
   a.used=used; return a;
 }
 function zero(){const o={};for(const s of [...SELF,...ENEMY])o[s]={I:0,L:0,M:0};o.vs={I:{I:0,L:0,M:0},L:{I:0,L:0,M:0},M:{I:0,L:0,M:0}};return o;}
@@ -585,6 +634,7 @@ function battle(A,D,K,maxT,track){
 function fmt(n){return Math.round(n).toLocaleString('en-US');}
 const pct=n=>(n*100).toFixed(1)+'%';
 function run(){
+  if(MODE==='bear') return runBear();
   const K=+document.getElementById('K').value||1, maxT=+document.getElementById('maxT').value||300,
         runs=Math.max(1,Math.min(5000,+document.getElementById('runs').value||300)), city=document.getElementById('city').checked;
   const A=buildArmy(CFG.A,'A'), D=buildArmy(CFG.D,'D');
@@ -641,8 +691,156 @@ function drawCurve(c,tA,tD){
     c.forEach((p,i)=>{const v=p[k]/p[2]; x.lineTo(pad+(i+1)/Math.max(1,n)*(W-pad-8),H-pad-(v/mx)*(H-pad-8));});x.stroke();};
   line(0,cs.getPropertyValue('--atk'),tA); line(1,cs.getPropertyValue('--def'),tD);
 }
+/* ===================== ตีหมี (Bear Hunt) =====================
+ โมเดลจาก kingshotguides.com "Bear Trap Damage Mechanics" (Kingshot ค่ายเดียวกับ WOS):
+ หมี = ทหารราบ 5,000 ตัว ป้องกัน 10 พลังชีวิต 83.33 · สู้ 10 เทิร์น ทหารไม่ตาย · ดาเมจ/เทิร์น/สาย = √(n×5000) × โจมตี×สังหาร ÷ (ป้องกัน×พลังชีวิต หมี)
+ กับดักเลเวล 1–5 = ดาเมจ +5%/เลเวล (wiki: เต็ม +25%) · หน่วยดาเมจเป็นหน่วยตัวจำลองจนกว่าจะปรับเทียบกับรายงานจริง */
+const BEAR={n:5000,D:10,H:83.33};
+function bearArmy(c){return buildArmy(c,'A');}
+// cf[t] = ดาเมจต่อ √ทหาร ของสาย t (ไม่ขึ้นกับจำนวนทหาร) → ใช้หาสัดส่วนที่ดีที่สุดได้ตรงๆ
+function bearFight(A,rounds,K){
+  const st=[], d={I:0,L:0,M:0}, cf={I:0,L:0,M:0}, per=[];
+  for(let t=1;t<=rounds;t++){
+    const m=zero(), deb=zero(); applyFx(A,m,deb,t,true,st);
+    // ลดป้องกันหมีคิดแบบเส้นตรง (ลด 25% ≈ ดาเมจ +25%) — หมีไม่มีบัฟป้องกันมาหักล้าง ถ้าหารตรงๆ ดีบัฟซ้อนหลายตัวจะพุ่งเกินจริงหลายสิบเท่า
+    const e=effStats(A,m,m), bDH=BEAR.D*BEAR.H/(1+deb.edef.I), inc=1+deb.vuln.I;
+    let r=0;
+    for(const i of TY){
+      const c=K*CFG.bear.cal*(1+.05*(CFG.bear.lv||0))*Math.sqrt(BEAR.n)*e[i].A*e[i].L*e[i].out*(1+e[i].vs.I)*inc*(COUNTER[i]==='I'?1.10:1)/bDH;
+      cf[i]+=c; const x=A.n[i]>=1?c*Math.sqrt(A.n[i]):0; d[i]+=x; r+=x; }
+    per.push(r);
+  }
+  return {tot:per.reduce((a,b)=>a+b,0),d,cf,per};
+}
+function bearSim(c,runs){
+  const K=+document.getElementById('K').value||1, R=CFG.bear.rounds||10, A=bearArmy(c);
+  const tots=[], d={I:0,L:0,M:0}, cf={I:0,L:0,M:0}, per=new Array(R).fill(0);
+  // สุ่มด้วย seed เดิมทุกครั้ง → เทียบสองทัพได้นิ่ง ไม่แกว่งตามดวง
+  const rnd=Math.random; let sd=0x9e3779b9;
+  Math.random=()=>{sd=sd+0x6D2B79F5|0; let t=Math.imul(sd^sd>>>15,1|sd); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296;};
+  try{ for(let k=0;k<runs;k++){const b=bearFight(A,R,K); tots.push(b.tot);
+    for(const t of TY){d[t]+=b.d[t]/runs; cf[t]+=b.cf[t]/runs;} b.per.forEach((v,i)=>per[i]+=v/runs);} }
+  finally{ Math.random=rnd; }
+  tots.sort((a,b)=>a-b);
+  const q=f=>tots[Math.min(tots.length-1,Math.floor(f*tots.length))];
+  return {A,avg:tots.reduce((a,b)=>a+b,0)/runs,lo:q(.1),hi:q(.9),d,cf,per,runs};
+}
+// สัดส่วนที่ดาเมจสูงสุด: Σ cf×√n สูงสุดเมื่อ n ∝ cf² (ยอดรวมเท่าเดิม)
+function optTroops(cf,N,inf){
+  const q=TY.map(t=>cf[t]*cf[t]), S=q[0]+q[1]+q[2]||1; let n=q.map(x=>N*x/S);
+  const fl=inf?Math.min(N,5000):0;
+  if(n[0]<fl){const rest=N-fl, s2=q[1]+q[2]||1; n=[fl,rest*q[1]/s2,rest*q[2]/s2];}
+  n=n.map(Math.round); n[2]+=N-n[0]-n[1]-n[2]; return n;
+}
+const dmgAt=(cf,n)=>TY.reduce((s,t,i)=>s+cf[t]*Math.sqrt(Math.max(0,n[i])),0);
+const rpct=n=>{const T=n[0]+n[1]+n[2]||1; return n.map(x=>{const v=x/T*100; return v<10?+v.toFixed(1):Math.round(v);});};
+function setTroops(c,n){TY.forEach((t,i)=>c.troops[t][0]=n[i]);}
+function runBear(){
+  const runs=Math.max(1,Math.min(5000,+document.getElementById('runs').value||300)), c=CFG.B;
+  const N=TY.reduce((s,t)=>s+c.troops[t][0],0);
+  if(!N){document.getElementById('res').innerHTML='<span class="lose">ใส่จำนวนทหารก่อน</span>';return;}
+  const S=bearSim(c,runs), A=S.A;
+  const mA=zero(),dD=zero(); applyFx(A,mA,dD,1,false,[]); const eA=effStats(A,mA,mA);
+  const cur=TY.map(t=>c.troops[t][0]), opt=optTroops(S.cf,N,CFG.bear.inf), gain=dmgAt(S.cf,opt)/dmgAt(S.cf,cur)-1;
+  const unit=CFG.bear.cal!==1?'':' <span class="tag">หน่วยตัวจำลอง</span>';
+  let h=`<div class="kpis">
+   <div class="kpi"><span>ดาเมจเฉลี่ยต่อ 1 ระดม${unit}</span><b class="win">${big(S.avg)}</b><span>${fmt(S.avg)}</span></div>
+   <div class="kpi"><span>ช่วงที่น่าจะได้ (โชคสกิล 10–90%)</span><b>${big(S.lo)} – ${big(S.hi)}</b></div>
+   <div class="kpi"><span>ดาเมจต่อเทิร์น</span><b>${big(S.avg/S.per.length)}</b><span>${S.per.length} เทิร์น · ทหารไม่ตาย</span></div>
+   <div class="kpi"><span>สัดส่วนที่ดาเมจสูงสุด</span><b>${rpct(opt).join('/')}</b><span>${gain>0.0005?'ดาเมจ +'+(gain*100).toFixed(1)+'% จากตอนนี้':'ตอนนี้ดีที่สุดแล้ว'}</span></div>
+  </div>
+  ${gain>0.0005?`<div style="margin-bottom:10px">ราบ ${fmt(opt[0])} · หอก ${fmt(opt[1])} · ธนู ${fmt(opt[2])} ${CFG.bear.inf?'(คงทหารราบขั้นต่ำ 5,000)':''} <button class="btn ghost" data-bopt="${opt.join(',')}" style="padding:2px 10px">ใช้สัดส่วนนี้</button></div>`:''}
+  <div class="grid2"><div class="scroll"><table><tr><th>สาย</th><th>ทหาร</th><th>ดาเมจ</th><th>ส่วนแบ่ง</th><th>ต่อ √ทหาร</th></tr>`;
+  for(const t of TY) h+=`<tr><td>${TYN[t]}</td><td>${fmt(A.n[t])}</td><td>${big(S.d[t])}</td><td>${S.avg?pct(S.d[t]/S.avg):'—'}</td><td>${big(S.cf[t])}</td></tr>`;
+  h+=`</table><div class="note" style="margin-top:6px">“ต่อ √ทหาร” = ความแรงต่อหัวของสายนั้น สายที่ค่านี้สูงควรได้ทหารมาก · สัดส่วนดีที่สุดคือทหารแต่ละสายเป็นสัดส่วนกับ (ค่านี้)² · ทหารเพิ่ม 10% ดาเมจเพิ่มแค่ ~4.9% (√)</div></div>
+  <div><canvas id="cvb" width="640" height="240"></canvas><div class="note">ดาเมจเฉลี่ยแต่ละเทิร์น · เทิร์นที่สูงกว่าคือสกิลรายเทิร์น/โอกาสทำงาน</div></div></div>
+  <details open><summary>ค่าที่ใช้คำนวณ (ไม่รวมสกิลที่เป็นโอกาส/รายเทิร์น)</summary><div class="scroll" style="margin-top:8px"><table><tr><th>สาย</th><th>โจมตี</th><th>สังหาร</th><th>ดาเมจ×</th></tr>`;
+  for(const t of TY) h+=`<tr><td>${TYN[t]}</td><td>${eA[t].A.toFixed(1)}</td><td>${eA[t].L.toFixed(1)}</td><td>${eA[t].out.toFixed(2)}</td></tr>`;
+  h+=`</table></div><div class="chips" style="margin-top:6px">${A.used.map(u=>{const s=HMAP[u.h].x.find(x=>x.k===u.s);return `<span class="chip ${s.f.length?'':'off'}" title="${skillDesc(s,u.lv)}">${u.src==='ผู้ร่วม'?'👥 ':''}${u.h} · ${u.s} Lv${u.lv}</span>`}).join('')}</div>
+  <div class="note" style="margin-top:6px">ตีหมีไม่ใช้ค่าป้องกัน/พลังชีวิตของเรา และสกิลลดดาเมจที่รับไม่มีผล · กับดัก Lv${CFG.bear.lv} คูณดาเมจ +${CFG.bear.lv*5}% แล้ว</div></details>
+  <p class="note">K = ${+document.getElementById('K').value||1} · จำลอง ${S.runs} รอบ · ${CFG.bear.cal!==1?'ปรับเทียบกับรายงานจริงแล้ว':'ยังไม่ได้ปรับเทียบ ใช้เทียบทัพกันเองเท่านั้น'} · สูตรจากไกด์ Kingshot ยังไม่ยืนยันกับ WOS</p>`;
+  const res=document.getElementById('res'); res.innerHTML=h;
+  res.onclick=e=>{const v=e.target.dataset.bopt; if(!v||MODE!=='bear')return; setTroops(CFG.B,v.split(',').map(Number)); saveCfg(); rerender(); run();};
+  drawBars(S.per);
+}
+function drawBars(per){
+  const cv=document.getElementById('cvb'); if(!cv)return; const x=cv.getContext('2d'), W=cv.width, H=cv.height, pad=28, cs=getComputedStyle(document.documentElement);
+  x.clearRect(0,0,W,H); const mx=Math.max(...per)||1, n=per.length, bw=(W-pad-12)/n;
+  x.strokeStyle=cs.getPropertyValue('--line'); x.beginPath(); x.moveTo(pad,8); x.lineTo(pad,H-pad); x.lineTo(W-8,H-pad); x.stroke();
+  x.fillStyle=cs.getPropertyValue('--mute'); x.font='11px sans-serif'; x.fillText(big(mx),2,14);
+  per.forEach((v,i)=>{const bh=v/mx*(H-pad-18); x.fillStyle=cs.getPropertyValue('--warn'); x.fillRect(pad+4+i*bw,H-pad-bh,Math.max(2,bw-6),bh);
+    x.fillStyle=cs.getPropertyValue('--mute'); if(n<=20||i%2===0) x.fillText(i+1,pad+4+i*bw+bw/2-6,H-10);});
+}
+async function adviseBear(){
+  const out=document.getElementById('adv'), btn=document.getElementById('advGo'), tryHero=document.getElementById('advHero').checked;
+  btn.disabled=true; const prog=m=>{out.innerHTML='⏳ '+m;};
+  try{
+  const mine0=clone(CFG.B), N=TY.reduce((s,t)=>s+mine0.troops[t][0],0), ev=(c,n)=>bearSim(c,n);
+  if(!N){out.innerHTML='<span class="lose">ใส่จำนวนทหารก่อน</span>';btn.disabled=false;return;}
+  prog('วัดดาเมจตั้งต้น…'); await tick();
+  const base=ev(mine0,300), inf=CFG.bear.inf;
+  // 1) สัดส่วน: สูตร n ∝ cf² เทียบกับเมต้าตีหมี
+  prog('ลองสัดส่วนทหาร…'); await tick();
+  const ratios=[['⭐ ดีที่สุดตามสูตร',optTroops(base.cf,N,inf)],['ตอนนี้',TY.map(t=>mine0.troops[t][0])]];
+  BEAR_PRE.forEach(r=>{const n=r.map(x=>Math.round(N*x/100)); n[2]+=N-n[0]-n[1]-n[2]; ratios.push(['เมต้า '+r.join('/'),n]);});
+  const rRows=ratios.map(([nm,n])=>{const c=clone(mine0); setTroops(c,n); return {nm,n,e:ev(c,150)};});
+  // 2) บัฟไอเทม (ตีหมีใช้แค่โจมตีกับสังหาร)
+  prog('ลองบัฟไอเทม…'); await tick();
+  const bufs=[]; for(const s of ['atk','leth']){const cur=(mine0.buf||{})[s]||0; if(cur>=20) continue;
+    const c=clone(mine0); c.buf=Object.assign({atk:0,def:0,leth:0,hp:0},c.buf||{}); c.buf[s]=20; bufs.push({s,cur,e:ev(c,200)});}
+  // 3) ฮีโร่ผู้นำ ต่อช่อง (สายเดิม · ไม่เกิน Gen ที่มี)
+  const heroSug=[], maxG=Math.max(0,...mine0.heroes.map(h=>HMAP[h[0]]?.g||0));
+  if(tryHero) for(let i=0;i<3;i++){ prog(`ลองฮีโร่ช่อง ${i+1}…`); await tick();
+    const curN=mine0.heroes[i][0], ty=HMAP[curN]?.t||TY[i], used=mine0.heroes.map(h=>h[0]); let best=null;
+    for(const h of HEROES){ if(h.t!==ty||h.r==='R'||used.includes(h.n)||(h.g||0)>maxG) continue;
+      const c=clone(mine0); c.heroes[i]=[h.n,[5,5,5],mine0.heroes[i][2]??10]; const e=ev(c,60); if(!best||e.avg>best.e.avg) best={n:h.n,e}; }
+    if(best){const c=clone(mine0); c.heroes[i]=[best.n,[5,5,5],mine0.heroes[i][2]??10]; best.e=ev(c,200); best.slot=i; best.cur=curN; if(best.e.avg>base.avg*1.001) heroSug.push(best);} }
+  // 4) ผู้ร่วม 4 คน (เลือกทีละช่อง · ใช้ฮีโร่ซ้ำได้เพราะเป็นคนละผู้เล่น)
+  const jc=clone(mine0), cand=HEROES.filter(h=>h.x[0]&&h.x[0].f.length);
+  for(let i=0;i<4;i++){ prog(`ลองผู้ร่วมคนที่ ${i+1}…`); await tick();
+    let best=null; for(const h of cand){ jc.join[i]=[h.n,5]; const e=ev(jc,40); if(!best||e.avg>best.e.avg) best={n:h.n,e}; } jc.join[i]=[best.n,5]; }
+  const joinBest={join:jc.join.map(j=>j[0]), e:ev(jc,200)};
+  const COMM=['Jessie','Jasser','Jeronimo','Jessie'], cc=clone(mine0); cc.join=COMM.map(n=>[n,5]); const commE=ev(cc,200);
+  // 5) รวมทุกอย่าง แล้วหาสัดส่วนใหม่ตามฮีโร่ชุดใหม่
+  prog('รวมทุกข้อ…'); await tick();
+  const combo=clone(mine0); combo.buf=Object.assign({atk:0,def:0,leth:0,hp:0},combo.buf||{}); bufs.forEach(b=>combo.buf[b.s]=20);
+  heroSug.forEach(h=>combo.heroes[h.slot]=[h.n,[5,5,5],combo.heroes[h.slot][2]??10]); combo.join=joinBest.join.map(n=>[n,5]);
+  setTroops(combo,optTroops(ev(combo,150).cf,N,inf)); const comboE=ev(combo,300);
+  ADV={side:'B',combo,joinBest};
+  const dd=(a,b)=>{const d=(a/b-1)*100; return `<b class="${d>=0?'win':'lose'}">${d>=0?'+':''}${d.toFixed(1)}%</b>`;};
+  let h=`<div class="kpis"><div class="kpi"><span>ดาเมจเฉลี่ยตอนนี้</span><b>${big(base.avg)}</b></div>
+    <div class="kpi"><span>ถ้าทำตามคำแนะนำทั้งหมด</span><b class="win">${big(comboE.avg)}</b><span>${dd(comboE.avg,base.avg)}</span></div></div>`;
+  h+=`<h3>1. สัดส่วนทหาร (ยอดรวมเท่าเดิม ${fmt(N)})</h3><div class="scroll"><table><tr><th>แบบ</th><th>ราบ/หอก/ธนู %</th><th>ดาเมจ</th><th></th></tr>`;
+  rRows.sort((a,b)=>b.e.avg-a.e.avg).forEach(r=>h+=`<tr><td>${r.nm}</td><td>${rpct(r.n).join(' / ')}</td><td>${big(r.e.avg)} ${dd(r.e.avg,base.avg)}</td><td>${r.nm==='ตอนนี้'?'':`<button class="btn ghost" data-br="${r.n.join(',')}">ใช้</button>`}</td></tr>`);
+  h+='</table></div>';
+  h+='<h3>2. บัฟไอเทม +20% (ตีหมีใช้แค่โจมตีกับสังหาร)</h3>';
+  h+= bufs.length? `<div class="scroll"><table><tr><th>เปิดบัฟ</th><th>ดาเมจ</th></tr>`+bufs.map(b=>`<tr><td>${STATN[b.s]} +20%${b.cur?' (ตอนนี้ +'+b.cur+'%)':''}</td><td>${big(b.e.avg)} ${dd(b.e.avg,base.avg)}</td></tr>`).join('')+'</table></div>' : '<div>เปิดบัฟโจมตีและสังหารครบ +20% แล้ว</div>';
+  if(tryHero){ h+=`<h3>3. ฮีโร่ผู้นำที่ช่วยได้มากสุด (สายเดิม · สกิล Lv5 · ไม่เกิน Gen ${maxG})</h3>`;
+    h+= heroSug.length? `<div class="scroll"><table><tr><th>ช่อง</th><th>เปลี่ยนจาก → เป็น</th><th>ดาเมจ</th><th></th></tr>`+heroSug.map(s=>`<tr><td>${s.slot+1}</td><td>${s.cur||'—'} → <b>${s.n}</b></td><td>${big(s.e.avg)} ${dd(s.e.avg,base.avg)}</td><td><button class="btn ghost" data-bh="${s.slot},${s.n}">ใช้</button></td></tr>`).join('')+'</table></div>' : '<div>ฮีโร่ชุดนี้ดีที่สุดแล้วในสายเดียวกัน</div>'; }
+  h+=`<h3>4. ผู้ร่วม 4 คน (สกิลแรกของฮีโร่ช่องแรก Lv5)</h3>
+    <div>${joinBest.join.map((n,i)=>`${i+1}. <b>${n}</b> (${HMAP[n].x[0].k})`).join(' · ')} → ${big(joinBest.e.avg)} ${dd(joinBest.e.avg,base.avg)} <button class="btn ghost" data-bj="1">ใช้</button></div>
+    <div style="margin-top:4px">ชุดที่ชุมชนใช้: ${COMM.join(' · ')} (ดาเมจ +25% ทุกคน รวม +100%) → ${big(commE.avg)} ${dd(commE.avg,base.avg)} <button class="btn ghost" data-bc="1">ใช้</button></div>
+    <div class="note">ตัวจำลองคิดว่าบัฟชนิดเดียวกันบวกกัน ต่างชนิดคูณกัน ผู้ร่วมที่ให้บัฟคนละชนิดกับผู้นำจึงอาจได้มากกว่าชุดชุมชน · ถ้าพันธมิตรไม่มีฮีโร่ชุดที่แนะนำ ใช้ชุดชุมชนได้เลย</div>`;
+  const T=[]; if(mine0.troops.I[0]<5000) T.push(`ทหารราบมีแค่ ${fmt(mine0.troops.I[0])} · ไกด์ WOS แนะนำอย่างน้อย 5,000 (ไกด์ไม่บอกเหตุผล ตัวจำลองยังไม่ได้คิดกฎนี้)`);
+  const pM=base.A.pct.p.M; if(Math.abs(pM[0]-pM[2])>=80){const lo=pM[0]<pM[2]?'โจมตี':'สังหาร'; T.push(`พลธนู: ${lo}ต่ำกว่าอีกค่ามาก → โจมตีกับสังหารคูณกัน อัป<b>${lo}</b>คุ้มกว่า`);}
+  T.push('ตอนเข้าร่วมระดมคนอื่น ให้ฮีโร่ช่องแรกเป็น Jessie / Jasser / Jeronimo (สกิลแรกดาเมจ +25%) จะช่วยทั้งพันธมิตรมากสุด');
+  h+=`<h3>💡 ข้อสังเกต</h3><ul style="margin:0;padding-left:20px;line-height:1.7">${T.map(x=>`<li>${x}</li>`).join('')}</ul>
+  <p class="note">ข้อ “ถ้าทำตามทั้งหมด” = บัฟครบ + ฮีโร่ + ผู้ร่วม แล้วหาสัดส่วนใหม่ · ตัวเลขสุ่มจากสกิลโอกาส คลาดได้ราว ±2%</p>
+  <button class="btn" data-ball="1">ใช้คำแนะนำทั้งหมด</button>`;
+  out.innerHTML=h;
+  out.onclick=e=>{const d=e.target.dataset, c=CFG.B;
+    if(d.br) setTroops(c,d.br.split(',').map(Number));
+    else if(d.bh){const [i,n]=d.bh.split(','); c.heroes[+i]=[n,[5,5,5],c.heroes[+i][2]??10];}
+    else if(d.bj) c.join=ADV.joinBest.join.map(n=>[n,5]);
+    else if(d.bc) c.join=['Jessie','Jasser','Jeronimo','Jessie'].map(n=>[n,5]);
+    else if(d.ball) CFG.B=clone(ADV.combo);
+    else return;
+    saveCfg(); rerender(); run(); e.target.textContent='✓ ใช้แล้ว'; };
+  }catch(err){out.innerHTML='<span class="lose">เกิดข้อผิดพลาด: '+err.message+'</span>';}
+  btn.disabled=false;
+}
 document.getElementById('go').onclick=run;
-document.body.insertAdjacentHTML('beforeend','<button class="btn" id="fab">▶ จำลองการรบ</button>');
+document.body.insertAdjacentHTML('beforeend',`<button class="btn" id="fab">${MODE==='bear'?'▶ จำลองตีหมี':'▶ จำลองการรบ'}</button>`);
 document.getElementById('fab').onclick=()=>{run(); document.getElementById('res').scrollIntoView({behavior:'smooth'});};
 
 /* ===================== แนะนำการแก้ทาง ===================== */
@@ -667,6 +865,7 @@ const rtxt=r=>`ราบ ${r[0]} · หอก ${r[1]} · ธนู ${r[2]}`;
 const dp=(a,b)=>{const d=(a-b)*100; return `<b class="${d>=0?'win':'lose'}">${d>=0?'+':''}${d.toFixed(1)}%</b>`;};
 let ADV=null;
 async function advise(){
+  if(MODE==='bear') return adviseBear();
   const side=document.getElementById('advSide').value, out=document.getElementById('adv'), btn=document.getElementById('advGo');
   const tryHero=document.getElementById('advHero').checked;
   btn.disabled=true; const prog=m=>{out.innerHTML='⏳ '+m;};
@@ -697,7 +896,7 @@ async function advise(){
     if(best){ const c=clone(mine0); c.heroes[i]=[best.n,[5,5,5],mine0.heroes[i][2]??10]; best.e=ev(c,150); best.slot=i; best.cur=curN; if(best.e.score>base.score) heroSug.push(best);} } }
   // 4) ผู้ร่วมระดม/รักษาเมือง (เลือกทีละช่อง)
   let joinBest=null;
-  if(MODE==='rally'){ const c=clone(mine0); const cand=HEROES.filter(h=>h.x[0]&&h.x[0].f.length);
+  if(MODE!=='solo'){ const c=clone(mine0); const cand=HEROES.filter(h=>h.x[0]&&h.x[0].f.length);
     for(let i=0;i<4;i++){ prog(`ลองผู้ร่วมคนที่ ${i+1}…`); await tick();
       let best=null; for(const h of cand){ c.join[i]=[h.n,5]; const e=ev(c,20); if(!best||e.score>best.e.score) best={n:h.n,e}; }
       c.join[i]=[best.n,5]; }
